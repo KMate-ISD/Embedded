@@ -9,9 +9,13 @@
 #include <avr/interrupt.h>
 
 unsigned char counter_byte = 0;
+unsigned char row_marker = 7;
 
 void initialize_ports(void);
 void initialize_timer2_overflow(void);
+void advance_game_state(void);
+void push_to_matrix(void);
+void read_joystick_input(void);
 
 int main(void)
 {
@@ -29,7 +33,29 @@ void initialize_timer2_overflow()
 	sei();
 }
 
-ISR(TIMER2_OVF_vect)
+void advance_game_state()
 {
 }
 
+void push_to_matrix()
+{
+}
+
+void read_joystick_input()
+{	
+}
+
+ISR(TIMER2_OVF_vect)
+{
+	if (counter_byte % 25 == 0) /* Roughly 20 times per second */
+	{
+		read_joystick_input();
+	}
+	
+	if !(counter_byte--) /* Roughly twice per second */
+	{
+		advance_game_state();
+	}
+	
+	push_to_matrix(); /* Roughly 61 full cycles per second */
+}
