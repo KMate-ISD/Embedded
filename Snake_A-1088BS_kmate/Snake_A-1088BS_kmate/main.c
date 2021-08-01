@@ -3,10 +3,28 @@
  *
  * Created: 2021. 07. 29. 23:46:38
  * Author : m8_krk
- */ 
+ */
+
+/*
+ * 74HC595 8bit shift register
+ * Shift register clock: SRCLK (TI), SH_CP (Philips)
+ * Storage register clock: RCLK (TI), ST_CP (Philips)
+ * Serial data input: SER (TI), DS (Philips)
+ */
 
 #include <avr/io.h>
 #include <avr/interrupt.h>
+
+const uint8_t RCLK = 4;
+const uint8_t SRCLK = 5;
+const uint8_t SER_A = 2;
+const uint8_t SER_B = 3;
+
+/* complements used for clearing a bit */
+const uint8_t RCLK_R = 0xEF;
+const uint8_t SRCLK_R = 0xDF;
+const uint8_t SER_A_R = 0xFB;
+const uint8_t SER_B_R = 0xF7;
 
 unsigned char counter_byte = 0;
 unsigned char row_marker = 7;
@@ -14,15 +32,21 @@ unsigned char row_marker = 7;
 void initialize_ports(void);
 void initialize_timer2_overflow(void);
 void advance_game_state(void);
-void push_to_matrix(void);
+void push_to_matrix(uint8_t);
 void read_joystick_input(void);
 
 int main(void)
 {
-    /* Replace with your application code */
-    while (1)
-    {
-    }
+	initialize_ports();
+	initialize_timer2_overflow();
+	while (1)
+	{
+	}
+}
+
+void initialize_ports()
+{
+	DDRD |= (1 << RCLK) | (1 << SRCLK) | (1 << SER_A) | (1 << SER_B);
 }
 
 void initialize_timer2_overflow()
@@ -37,12 +61,28 @@ void advance_game_state()
 {
 }
 
-void push_to_matrix()
+void push_to_matrix(uint8_t row_of_bits)
 {
+	uint8_t i;
+	for (i = 0; i < 8; i++)
+	{
+		/* Send bit to serial pins */
+		uint8_t bit = (row_of_bits >> i) & 0x01;
+		PORTD &= SER_A_R & SER_B_R;
+		PORTD |= (bit << SER_A) | (bit << SER_B);
+		
+		/* SH_CP LOW-TO-HIGH (Push to shift register) */
+		PORTD &= SRCLK_R;
+		PORTD |= (1 << SRCLK);
+	}
+
+	/* ST_CP LOW-TO-HIGH (Push to storage register) */
+	PORTD &= RCLK_R;
+	PORTD |= (1 << RCLK);
 }
 
 void read_joystick_input()
-{	
+{
 }
 
 ISR(TIMER2_OVF_vect)
@@ -52,10 +92,10 @@ ISR(TIMER2_OVF_vect)
 		read_joystick_input();
 	}
 	
-	if !(counter_byte--) /* Roughly twice per second */
+	if (!(counter_byte--)) /* Roughly twice per second */
 	{
 		advance_game_state();
 	}
 	
-	push_to_matrix(); /* Roughly 61 full cycles per second */
+	push_to_matrix(0x01); /* Roughly 61 full cycles per second */
 }
