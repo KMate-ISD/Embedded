@@ -15,6 +15,7 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 
+/* Port mapping */
 const uint8_t RCLK = 4;
 const uint8_t SRCLK = 5;
 const uint8_t SER_A = 2;
@@ -95,18 +96,18 @@ void read_joystick_input()
 {
 }
 
-ISR(TIMER2_OVF_vect) /* Roughly 448 calls per second */
+ISR(TIMER2_OVF_vect) // Roughly 448 calls per second
 {
-	if (!(counter_byte % 25)) /* Roughly 20 times per second */
+	if (!(counter_byte % 25)) // Roughly 20 times per second
 	{
 		read_joystick_input();
 	}
 	
-	if (!(--counter_byte)) /* Roughly twice per second */
+	if (!(--counter_byte)) // Roughly twice per second
 	{
 		advance_game_state();
 	}
 	
 	row_of_bits = 1 << (counter_byte % 8);
-	push_to_matrix(0x01, row_of_bits); /* Roughly 61 full cycles per second */
+	push_to_matrix(0x01, row_of_bits); // Roughly 61 full cycles per second
 }
