@@ -54,4 +54,4 @@ dkms.conf
 # User additions
 *.ino
 *.atsuo
-*.Debug/
+Debug/
