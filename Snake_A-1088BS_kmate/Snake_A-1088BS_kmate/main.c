@@ -27,12 +27,12 @@ const uint8_t SER_A_R = 0xFB;
 const uint8_t SER_B_R = 0xF7;
 
 unsigned char counter_byte = 0;
-unsigned char row_marker = 7;
+unsigned char row_of_bits = 0;
 
 void initialize_ports(void);
 void initialize_timer2_overflow(void);
 void advance_game_state(void);
-void push_to_matrix(uint8_t);
+void push_to_matrix(uint8_t, uint8_t);
 void read_joystick_input(void);
 
 int main(void)
@@ -61,15 +61,16 @@ void advance_game_state()
 {
 }
 
-void push_to_matrix(uint8_t row_of_bits)
-{
+void push_to_matrix(uint8_t column_of_bits, uint8_t row_of_bits)
+{	
 	uint8_t i;
 	for (i = 0; i < 8; i++)
 	{
 		/* Send bit to serial pins */
-		uint8_t bit = (row_of_bits >> i) & 0x01;
+		uint8_t column = (column_of_bits >> i) & 0x01;
+		uint8_t row = (row_of_bits >> i) & 0x01;
 		PORTD &= SER_A_R & SER_B_R;
-		PORTD |= (bit << SER_A) | (bit << SER_B);
+		PORTD |= (column << SER_A) | (row << SER_B);
 		
 		/* SH_CP LOW-TO-HIGH (Push to shift register) */
 		PORTD &= SRCLK_R;
@@ -85,17 +86,18 @@ void read_joystick_input()
 {
 }
 
-ISR(TIMER2_OVF_vect)
+ISR(TIMER2_OVF_vect) /* Roughly 448 calls per second */
 {
-	if (counter_byte % 25 == 0) /* Roughly 20 times per second */
+	if (!(counter_byte % 25)) /* Roughly 20 times per second */
 	{
 		read_joystick_input();
 	}
 	
-	if (!(counter_byte--)) /* Roughly twice per second */
+	if (!(--counter_byte)) /* Roughly twice per second */
 	{
 		advance_game_state();
 	}
 	
-	push_to_matrix(0x01); /* Roughly 61 full cycles per second */
+	row_of_bits = 1 << (counter_byte % 8);
+	push_to_matrix(0x01, row_of_bits); /* Roughly 61 full cycles per second */
 }
