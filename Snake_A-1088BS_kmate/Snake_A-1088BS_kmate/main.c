@@ -28,6 +28,12 @@ const uint8_t SER_B_R = 0xF7;
 
 unsigned char counter_byte = 0;
 unsigned char row_of_bits = 0;
+/* TIMER2 OVF scaling */
+uint8_t counter_byte = 0;
+
+/* LED matrix */
+uint8_t row_of_bits = 0;
+
 /* Game state */
 uint8_t direction = 0x00; // UP, DOWN, LEFT, RIGHT: 0, 1, 2, 3
 uint8_t game_field[8] = {0, 0, 0, 0, 0, 0x80, 0x80, 0x80};
