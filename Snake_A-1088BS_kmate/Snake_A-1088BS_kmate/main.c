@@ -28,6 +28,11 @@ const uint8_t SER_B_R = 0xF7;
 
 unsigned char counter_byte = 0;
 unsigned char row_of_bits = 0;
+/* Game state */
+uint8_t direction = 0x00; // UP, DOWN, LEFT, RIGHT: 0, 1, 2, 3
+uint8_t game_field[8] = {0, 0, 0, 0, 0, 0x80, 0x80, 0x80};
+uint8_t snake_body[64] = {50, 60, 70};
+uint8_t snake_length = 3;
 
 void initialize_ports(void);
 void initialize_timer2_overflow(void);
