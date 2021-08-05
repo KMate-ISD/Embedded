@@ -43,9 +43,16 @@ uint8_t game_field[8];
 uint8_t snake_body[64];
 uint8_t snake_length;
 
+    /* ====================================
+     * METHODS
+     * ==================================== */
 
+/* Initialization */
 void initialize_ports(void);
 void initialize_timer2_overflow(void);
+void initialize_game_model(void);
+
+/* Timed behaviour */
 void advance_game_state(void);
 void push_to_matrix(uint8_t, uint8_t);
 void read_joystick_input(void);
