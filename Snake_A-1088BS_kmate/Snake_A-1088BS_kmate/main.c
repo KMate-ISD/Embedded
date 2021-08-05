@@ -57,6 +57,17 @@ void advance_game_state(void);
 void push_to_matrix(uint8_t, uint8_t);
 void read_joystick_input(void);
 
+    /* ====================================
+     * FUNCTIONS
+     * ==================================== */
+
+/* Game mechanics */
+uint8_t spawn_fruit(void);
+
+/* ========================================
+ * PROCESS
+ * ======================================== */
+
 int main(void)
 {
 	initialize_ports();
