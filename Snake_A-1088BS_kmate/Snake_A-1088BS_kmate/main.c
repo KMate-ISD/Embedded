@@ -29,6 +29,7 @@ const uint8_t SER_B_R = 0xF7;
 
 /* TIMER2 OVF scaling */
 uint8_t counter_byte = 0;
+unsigned int seed; // Random seed
 
 /* LED matrix */
 uint8_t row_of_bits = 0;
