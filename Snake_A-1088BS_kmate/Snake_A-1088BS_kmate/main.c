@@ -26,8 +26,6 @@ const uint8_t SRCLK_R = 0xDF;
 const uint8_t SER_A_R = 0xFB;
 const uint8_t SER_B_R = 0xF7;
 
-unsigned char counter_byte = 0;
-unsigned char row_of_bits = 0;
 /* TIMER2 OVF scaling */
 uint8_t counter_byte = 0;
 
