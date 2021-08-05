@@ -27,18 +27,22 @@ const uint8_t SRCLK_R = 0xDF;
 const uint8_t SER_A_R = 0xFB;
 const uint8_t SER_B_R = 0xF7;
 
-/* TIMER2 OVF scaling */
-uint8_t counter_byte = 0;
+    /* ====================================
+     * DATA FIELDS
+     * ==================================== */
+
+/* System */
+uint8_t counter_byte = 0; // TIMER2 OVF scaling
+uint8_t row_of_bits = 0; // Marks the active row on the LED matrix
 unsigned int seed; // Random seed
 
-/* LED matrix */
-uint8_t row_of_bits = 0;
+/* Game model */
+uint8_t direction; // UP, DOWN, LEFT, RIGHT: 0, 1, 2, 3
+uint8_t fruit_position;
+uint8_t game_field[8];
+uint8_t snake_body[64];
+uint8_t snake_length;
 
-/* Game state */
-uint8_t direction = 0x00; // UP, DOWN, LEFT, RIGHT: 0, 1, 2, 3
-uint8_t game_field[8] = {0, 0, 0, 0, 0, 0x80, 0x80, 0x80};
-uint8_t snake_body[64] = {50, 60, 70};
-uint8_t snake_length = 3;
 
 void initialize_ports(void);
 void initialize_timer2_overflow(void);
