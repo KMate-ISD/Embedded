@@ -72,11 +72,21 @@ int main(void)
 {
 	initialize_ports();
 	initialize_timer2_overflow();
+	initialize_game_model();
 	while (1)
 	{
 	}
 }
 
+/* ========================================
+ * DEFINITION
+ * ======================================== */
+
+    /* ====================================
+     * METHODS
+     * ==================================== */
+
+/* Initialization */
 void initialize_ports()
 {
 	DDRD |= (1 << RCLK) | (1 << SRCLK) | (1 << SER_A) | (1 << SER_B);
