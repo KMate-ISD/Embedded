@@ -151,6 +151,19 @@ void read_joystick_input()
 
 /* Game mechanics */
 
+
+uint8_t check_collision(uint8_t snake_head_proposed_y, uint8_t snake_head_proposed_x)
+{
+	if (((snake_head_proposed_y*10 / 7) > 10) || ((snake_head_proposed_x*10 / 7 > 10)))
+	{
+		return 1;
+	} 
+	else
+	{
+		return 0;
+	}
+}
+
 uint8_t check_victory_condition()
 {
 	if (snake_length > 63)
