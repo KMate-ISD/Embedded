@@ -100,6 +100,21 @@ void initialize_timer2_overflow()
 	sei();
 }
 
+void initialize_game_model()
+{
+	srand(seed);
+	snake_body[0] = 50;
+	snake_body[1] = 60;
+	snake_body[2] = 70;
+	snake_length = 3;
+	direction = 0;
+	game_field[5] = 0x80;
+	game_field[6] = 0x80;
+	game_field[7] = 0x80;
+	fruit_position = spawn_fruit();
+}
+
+/* Timed behaviour */
 void advance_game_state()
 {
 }
