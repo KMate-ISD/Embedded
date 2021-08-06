@@ -150,6 +150,19 @@ void read_joystick_input()
 }
 
 /* Game mechanics */
+
+uint8_t check_victory_condition()
+{
+	if (snake_length > 63)
+	{
+		return 1;
+	} 
+	else
+	{
+		return 0;
+	}
+}
+
 uint8_t spawn_fruit()
 {
 	uint8_t fruit_proposed = rand() % 64;
