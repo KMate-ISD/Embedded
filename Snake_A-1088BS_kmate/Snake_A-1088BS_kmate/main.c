@@ -42,12 +42,12 @@ const uint8_t SER_B_R = 0xF7;
  * ---------------------------------------- */
 
 /* System */
-uint8_t counter_byte = 0; // TIMER2 OVF scaling
-uint8_t row_of_bits = 0; // Marks the active row on the LED matrix
-uint8_t seed; // Random seed
+uint8_t counter_byte = 0;	// TIMER2 OVF scaling
+uint8_t row_of_bits = 0;	// Marks the active row on the LED matrix
+uint8_t seed;				// Random seed
 
 /* Game model */
-uint8_t direction; // UP, LEFT, DOWN, RIGHT: 0, 1, 2, 3
+uint8_t direction;			// UP, LEFT, DOWN, RIGHT: 0, 1, 2, 3
 uint8_t fruit_position;
 uint8_t game_field[8];
 uint8_t snake_body[64];
@@ -189,18 +189,18 @@ uint8_t spawn_fruit()
 }
 
 /* Interrupt */	  
-ISR(TIMER2_OVF_vect) // Roughly 448 calls per second
+ISR(TIMER2_OVF_vect)						// Roughly 448* per second
 {
-	if (!(counter_byte % 25)) // Roughly 20 times per second
+	if (!(counter_byte % 25))				// Roughly 20* per second
 	{
 		read_joystick_input();
 	}
 	
-	if (!(--counter_byte)) // Roughly twice per second
+	if (!(--counter_byte))					// Roughly 2* per second
 	{
 		advance_game_state();
 	}
 	
-	row_of_bits = 1 << (counter_byte % 8);
-	push_to_matrix(0x01, row_of_bits); // Roughly 61 full cycles per second
+	row_of_bits = 1 << (counter_byte % 8);	// Roughly 61* full cycles per second
+	push_to_matrix(0x01, row_of_bits);
 }
