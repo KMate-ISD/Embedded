@@ -144,6 +144,27 @@ void read_joystick_input()
 {
 }
 
+    /* ====================================
+     * FUNCTIONS
+     * ==================================== */
+
+/* Game mechanics */
+uint8_t spawn_fruit()
+{
+	uint8_t fruit_proposed = rand() % 64;
+	uint8_t fruit_proposed_y = fruit_proposed / 10;
+	uint8_t fruit_proposed_x = fruit_proposed % 10;
+	while (game_field[fruit_proposed_y] & (1 << fruit_proposed_x))
+	{
+		fruit_proposed = rand() % 64;
+	}
+	return fruit_proposed;
+}
+
+    /* ====================================
+     * TIMER INTERRUPT
+     * ==================================== */
+	  
 ISR(TIMER2_OVF_vect) // Roughly 448 calls per second
 {
 	if (!(counter_byte % 25)) // Roughly 20 times per second
