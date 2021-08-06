@@ -15,6 +15,14 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 
+/* ========================================
+ * DECLARATION
+ * ======================================== */
+
+    /* ====================================
+     * CONSTANTS
+     * ==================================== */
+
 /* Port mapping */
 const uint8_t RCLK = 4;
 const uint8_t SRCLK = 5;
