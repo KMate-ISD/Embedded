@@ -45,7 +45,7 @@ uint8_t row_of_bits = 0; // Marks the active row on the LED matrix
 unsigned int seed; // Random seed
 
 /* Game model */
-uint8_t direction; // UP, DOWN, LEFT, RIGHT: 0, 1, 2, 3
+uint8_t direction; // UP, LEFT, DOWN, RIGHT: 0, 1, 2, 3
 uint8_t fruit_position;
 uint8_t game_field[8];
 uint8_t snake_body[64];
