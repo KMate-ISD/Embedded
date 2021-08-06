@@ -16,13 +16,14 @@
 #include <avr/interrupt.h>
 #include <stdlib.h>
 
+
 /* ========================================
- * DECLARATION
+ * | DECLARATION
  * ======================================== */
 
-    /* ------------------------------------
-     * Constants
-     * ------------------------------------ */
+/* ----------------------------------------
+ * | Constants
+ * ---------------------------------------- */
 
 /* Port mapping */
 const uint8_t RCLK = 4;
@@ -36,9 +37,9 @@ const uint8_t SRCLK_R = 0xDF;
 const uint8_t SER_A_R = 0xFB;
 const uint8_t SER_B_R = 0xF7;
 
-    /* ------------------------------------
-     * Data fields
-     * ------------------------------------ */
+/* ----------------------------------------
+ * | Data fields
+ * ---------------------------------------- */
 
 /* System */
 uint8_t counter_byte = 0; // TIMER2 OVF scaling
@@ -52,9 +53,9 @@ uint8_t game_field[8];
 uint8_t snake_body[64];
 uint8_t snake_length;
 
-    /* ------------------------------------
-     * Methods
-     * ------------------------------------ */
+/* ----------------------------------------
+ * | Functions and methods
+ * ---------------------------------------- */
 
 /* Initialization */
 void initialize_ports(void);
@@ -66,15 +67,12 @@ void advance_game_state(void);
 void push_to_matrix(uint8_t, uint8_t);
 void read_joystick_input(void);
 
-    /* ------------------------------------
-     * Functions
-     * ------------------------------------ */
-
 /* Game mechanics */
 uint8_t spawn_fruit(void);
 
+
 /* ========================================
- * PROCESS
+ * | PROCESS
  * ======================================== */
 
 int main(void)
@@ -87,13 +85,10 @@ int main(void)
 	}
 }
 
-/* ========================================
- * DEFINITION
- * ======================================== */
 
-    /* ------------------------------------
-     * Methods
-     * ------------------------------------ */
+/* ========================================
+ * | DEFINITION
+ * ======================================== */
 
 /* Initialization */
 void initialize_ports()
@@ -154,10 +149,6 @@ void read_joystick_input()
 {
 }
 
-    /* ------------------------------------
-     * Functions
-     * ------------------------------------ */
-
 /* Game mechanics */
 uint8_t spawn_fruit()
 {
@@ -171,10 +162,7 @@ uint8_t spawn_fruit()
 	return fruit_proposed;
 }
 
-    /* ------------------------------------
-     * Interrupt
-     * ------------------------------------ */
-	  
+/* Interrupt */	  
 ISR(TIMER2_OVF_vect) // Roughly 448 calls per second
 {
 	if (!(counter_byte % 25)) // Roughly 20 times per second
