@@ -14,6 +14,7 @@
 
 #include <avr/io.h>
 #include <avr/interrupt.h>
+#include <stdlib.h>
 
 /* ========================================
  * DECLARATION
@@ -42,7 +43,7 @@ const uint8_t SER_B_R = 0xF7;
 /* System */
 uint8_t counter_byte = 0; // TIMER2 OVF scaling
 uint8_t row_of_bits = 0; // Marks the active row on the LED matrix
-unsigned int seed; // Random seed
+uint8_t seed; // Random seed
 
 /* Game model */
 uint8_t direction; // UP, LEFT, DOWN, RIGHT: 0, 1, 2, 3
@@ -110,6 +111,7 @@ void initialize_timer2_overflow()
 
 void initialize_game_model()
 {
+	seed = 131;
 	srand(seed);
 	snake_body[0] = 50;
 	snake_body[1] = 60;
