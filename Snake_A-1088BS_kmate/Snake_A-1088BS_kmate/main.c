@@ -162,7 +162,7 @@ void move_snake()
 uint8_t check_collision(uint8_t snake_head_proposed_y, uint8_t snake_head_proposed_x)
 {
 	if (((snake_head_proposed_y*10 / 7) > 10) ||
-		((snake_head_proposed_x*10 / 7 > 10)) ||
+		((snake_head_proposed_x*10 / 7) > 10) ||
 		(game_field[snake_head_proposed_y] & (1 << (7 - snake_head_proposed_x))))
 	{
 		return 1;
