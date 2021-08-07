@@ -69,12 +69,12 @@ void initialize_timer2_overflow(void);
 void initialize_game_model(void);
 
 /* Timed behaviour */
-void advance_game_state(void);
 void push_to_matrix(uint8_t, uint8_t);
 void read_joystick_input(void);
+uint8_t advance_game_state(void);
 
 /* Game mechanics */
-void move_snake(void);
+uint8_t move_snake(void);
 uint8_t check_collision(uint8_t, uint8_t);
 uint8_t check_victory_condition(void);
 uint8_t spawn_fruit(void);
@@ -129,18 +129,6 @@ void initialize_game_model()
 }
 
 /* Timed behaviour */
-void advance_game_state()
-{
-	if (check_victory_condition())
-	{
-		return 1;
-	}
-	else
-	{
-		return 0;
-	}
-}
-
 void push_to_matrix(uint8_t column_of_bits, uint8_t row_of_bits)
 {	
 	uint8_t i;
@@ -166,14 +154,50 @@ void read_joystick_input()
 {
 }
 
-/* Game mechanics */
-
-void move_snake()
+uint8_t advance_game_state()
 {
-	uint8_t snake_head_y = snake_body[0] / 10;
-	uint8_t snake_head_x = snake_body[0] % 10;
-	uint8_t snake_head_proposed_y;
-	uint8_t snake_head_proposed_x;
+	if (check_victory_condition())
+	{
+		return 1;
+	}
+	else
+	{
+		return 0;
+	}
+}
+
+/* Game mechanics */
+uint8_t move_snake()
+{
+	uint8_t snake_head_proposed_y = snake_body[0] / 10;
+	uint8_t snake_head_proposed_x = snake_body[0] % 10;
+	
+	switch (direction)
+	{
+		case 1:
+		snake_head_proposed_x -= 1;
+		break;
+		case 2:
+		snake_head_proposed_y += 1;
+		break;
+		case 3:
+		snake_head_proposed_x += 1;
+		break;
+		default:
+		snake_head_proposed_y -= 1;
+		break;
+	}
+	
+	if (check_collision(snake_head_proposed_y, snake_head_proposed_x))
+	{
+		return 1;
+	}
+	else
+	{
+		
+	}
+	
+	return 0;
 }
 
 uint8_t check_collision(uint8_t snake_head_proposed_y, uint8_t snake_head_proposed_x)
@@ -216,7 +240,7 @@ uint8_t spawn_fruit()
 	return fruit_proposed_y*10 + fruit_proposed_x;
 }
 
-/* Interrupt */	  
+/* Interrupt */
 ISR(TIMER2_OVF_vect)						// Roughly 448* per second
 {
 	if (!(counter_byte % 25))				// Roughly 20* per second
