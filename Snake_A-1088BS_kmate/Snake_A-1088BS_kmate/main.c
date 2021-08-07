@@ -187,14 +187,16 @@ uint8_t check_victory_condition()
 
 uint8_t spawn_fruit()
 {
-	uint8_t fruit_proposed = rand() % 64;
-	uint8_t fruit_proposed_y = fruit_proposed / 10;
-	uint8_t fruit_proposed_x = fruit_proposed % 10;
-	while (game_field[fruit_proposed_y] & (1 << fruit_proposed_x))
+	uint8_t fruit_proposed_y;
+	uint8_t fruit_proposed_x;
+	
+	do
 	{
-		fruit_proposed = rand() % 64;
-	}
-	return fruit_proposed;
+		fruit_proposed_y = rand() % 8;
+		fruit_proposed_x = rand() % 8;
+	} while (game_field[fruit_proposed_y] & (1 << (7 - fruit_proposed_x)));
+	
+	return fruit_proposed_y*10 + fruit_proposed_x;
 }
 
 /* Interrupt */	  
