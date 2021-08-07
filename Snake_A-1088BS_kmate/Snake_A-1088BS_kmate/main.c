@@ -125,6 +125,14 @@ void initialize_game_model()
 /* Timed behaviour */
 void advance_game_state()
 {
+	if (check_victory_condition())
+	{
+		return 1;
+	}
+	else
+	{
+		return 0;
+	}
 }
 
 void push_to_matrix(uint8_t column_of_bits, uint8_t row_of_bits)
