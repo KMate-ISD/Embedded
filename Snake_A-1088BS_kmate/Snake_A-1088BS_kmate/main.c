@@ -69,7 +69,7 @@ void read_joystick_input(void);
 
 /* Game mechanics */
 void move_snake(void);
-uint8_t check_collision(int8_t, int8_t);
+uint8_t check_collision(uint8_t, uint8_t);
 uint8_t check_victory_condition(void);
 uint8_t spawn_fruit(void);
 
@@ -161,7 +161,9 @@ void move_snake()
 
 uint8_t check_collision(uint8_t snake_head_proposed_y, uint8_t snake_head_proposed_x)
 {
-	if (((snake_head_proposed_y*10 / 7) > 10) || ((snake_head_proposed_x*10 / 7 > 10)))
+	if (((snake_head_proposed_y*10 / 7) > 10) ||
+		((snake_head_proposed_x*10 / 7 > 10)) ||
+		(game_field[snake_head_proposed_y] & (1 << (7 - snake_head_proposed_x))))
 	{
 		return 1;
 	} 
