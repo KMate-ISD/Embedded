@@ -164,7 +164,10 @@ void read_joystick_input()
 
 void move_snake()
 {
-	
+	uint8_t snake_head_y = snake_body[0] / 10;
+	uint8_t snake_head_x = snake_body[0] % 10;
+	uint8_t snake_head_proposed_y;
+	uint8_t snake_head_proposed_x;
 }
 
 uint8_t check_collision(uint8_t snake_head_proposed_y, uint8_t snake_head_proposed_x)
