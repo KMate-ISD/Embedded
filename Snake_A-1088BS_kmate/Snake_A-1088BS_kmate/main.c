@@ -52,9 +52,9 @@ uint8_t fruit_position;		// *** 5bit
 uint8_t game_field[8];		// 8byte || unnecessary? see snake_body
 uint8_t snake_body[64];		// *** 64*5bit || 64bit + 64*2bit + 5bit (is_set + direction + head_position)?
 uint8_t snake_length;		// *** 5bit
-uint8_t is_won;				// *** 1bit
+uint8_t is_concluded;				// *** 1bit
 
-/* is_won + direction + fruit_position? -> 8bit -> 1byte
+/* is_concluded + direction + fruit_position? -> 8bit -> 1byte
  * snake_body -> 192bit -> 24byte
  * snake_head + snake_length -> 10bit -> 2byte
  * 76byte vs 27byte */
@@ -71,10 +71,10 @@ void initialize_game_model(void);
 /* Timed behaviour */
 void push_to_matrix(uint8_t, uint8_t);
 void read_joystick_input(void);
-uint8_t advance_game_state(void);
+void advance_game_state(void);
 
 /* Game mechanics */
-uint8_t move_snake(void);
+void move_snake(void);
 uint8_t check_collision(uint8_t, uint8_t);
 uint8_t check_victory_condition(void);
 uint8_t spawn_fruit(void);
@@ -89,7 +89,8 @@ int main(void)
 	initialize_ports();
 	initialize_timer2_overflow();
 	initialize_game_model();
-	while (1)
+	
+	while (!(is_concluded))
 	{
 	}
 }
@@ -154,20 +155,18 @@ void read_joystick_input()
 {
 }
 
-uint8_t advance_game_state()
+void advance_game_state()
 {
-	if (check_victory_condition())
+	is_concluded = check_victory_condition();
+	
+	if (!(is_concluded))
 	{
-		return 1;
-	}
-	else
-	{
-		return 0;
+		move_snake();
 	}
 }
 
 /* Game mechanics */
-uint8_t move_snake()
+void move_snake()
 {
 	uint8_t snake_head_proposed_y = snake_body[0] / 10;
 	uint8_t snake_head_proposed_x = snake_body[0] % 10;
@@ -188,16 +187,17 @@ uint8_t move_snake()
 		break;
 	}
 	
-	if (check_collision(snake_head_proposed_y, snake_head_proposed_x))
-	{
-		return 1;
-	}
-	else
-	{
-		
-	}
+	is_concluded = check_collision(snake_head_proposed_y, snake_head_proposed_x);
 	
-	return 0;
+	if (!(is_concluded))
+	{
+		uint8_t i;
+		for (i = (snake_length - 1); i > 0; i--)
+		{
+			snake_body[i] = snake_body[i - 1];
+		}
+		snake_body[i] = snake_head_proposed_y*10 + snake_head_proposed_x;
+	}
 }
 
 uint8_t check_collision(uint8_t snake_head_proposed_y, uint8_t snake_head_proposed_x)
