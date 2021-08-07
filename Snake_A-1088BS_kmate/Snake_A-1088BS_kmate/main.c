@@ -43,15 +43,21 @@ const uint8_t SER_B_R = 0xF7;
 
 /* System */
 uint8_t counter_byte = 0;	// TIMER2 OVF scaling
-uint8_t row_of_bits = 0;	// Marks the active row on the LED matrix
+uint8_t row_of_bits = 0;	// *** 3bit | Marks the active row on the LED matrix
 uint8_t seed;				// Random seed
 
 /* Game model */
-uint8_t direction;			// UP, LEFT, DOWN, RIGHT: 0, 1, 2, 3
-uint8_t fruit_position;
-uint8_t game_field[8];
-uint8_t snake_body[64];
-uint8_t snake_length;
+uint8_t direction;			// *** 2bit | UP, LEFT, DOWN, RIGHT: 0, 1, 2, 3
+uint8_t fruit_position;		// *** 5bit
+uint8_t game_field[8];		// 8byte || unnecessary? see snake_body
+uint8_t snake_body[64];		// *** 64*5bit || 64bit + 64*2bit + 5bit (is_set + direction + head_position)?
+uint8_t snake_length;		// *** 5bit
+uint8_t is_won;				// *** 1bit
+
+/* is_won + direction + fruit_position? -> 8bit -> 1byte
+ * snake_body -> 192bit -> 24byte
+ * snake_head + snake_length -> 10bit -> 2byte
+ * 76byte vs 27byte */
 
 /* ----------------------------------------
  * | Functions and methods
