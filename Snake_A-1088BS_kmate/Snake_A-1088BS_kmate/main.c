@@ -54,6 +54,7 @@ uint8_t game_field[8];		// 8byte || unnecessary? see snake_body
 uint8_t snake_body[64];		// *** 64*5bit || 64bit + 64*2bit + 5bit (is_set + direction + head_position)?
 uint8_t snake_length;		// *** 5bit
 uint8_t is_concluded;		// *** 1bit
+uint16_t total_ticks;
 
 /* is_concluded + direction + fruit_position? -> 8bit -> 1byte
  * snake_body -> 192bit -> 24byte
@@ -131,6 +132,7 @@ void initialize_game_model()
 	game_field[7] = 0x80;
 	fruit_position = spawn_fruit();
 	score = 0;
+	total_ticks = 0;
 	project_game_status_onto_game_field();
 }
 
@@ -313,6 +315,7 @@ ISR(TIMER2_OVF_vect)							// Roughly 448* per second
 	if (!(--counter_byte || is_concluded))	// Roughly 2* per second
 	{
 		advance_game_state();
+		total_ticks++;
 	}
 	
 	row_of_bits = 1 << (counter_byte % 8);		// Roughly 61* full cycles per second
