@@ -43,7 +43,7 @@ const uint8_t SER_B_R = 0xF7;
 
 /* System */
 uint8_t counter_byte = 0;	// TIMER2 OVF scaling
-uint8_t row_of_bits = 0;	// *** 3bit | Marks the active row on the LED matrix
+uint8_t active_row = 0;	// *** 3bit | Marks the active row on the LED matrix
 uint8_t seed;				// Random seed
 
 /* Game model */
@@ -139,14 +139,14 @@ void initialize_game_model()
 }
 
 /* Timed behaviour */
-void push_to_matrix(uint8_t column_of_bits, uint8_t row_of_bits)
+void push_to_matrix(uint8_t column_of_bits, uint8_t active_row)
 {	
 	uint8_t i;
 	for (i = 0; i < 8; i++)
 	{
 		/* Send bit to serial pins */
 		uint8_t column = (column_of_bits >> i) & 0x01;
-		uint8_t row = (row_of_bits >> i) & 0x01;
+		uint8_t row = (active_row >> i) & 0x01;
 		PORTD &= SER_A_R & SER_B_R;
 		PORTD |= (column << SER_A) | (row << SER_B);
 		
@@ -320,6 +320,6 @@ ISR(TIMER2_OVF_vect)							// Roughly 448* per second
 		total_ticks++;
 	}
 	
-	row_of_bits = 1 << (counter_byte % 8);		// Roughly 61* full cycles per second
-	push_to_matrix(0x01, row_of_bits);
+	active_row = counter_byte % 8;		// Roughly 61* full cycles per second
+	push_to_matrix(game_field[active_row], (1 << active_row));
 }
