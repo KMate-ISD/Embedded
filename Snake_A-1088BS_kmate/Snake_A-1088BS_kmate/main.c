@@ -97,6 +97,8 @@ int main(void)
 	while (!(is_concluded))
 	{
 	}
+	
+	return total_ticks;
 }
 
 
