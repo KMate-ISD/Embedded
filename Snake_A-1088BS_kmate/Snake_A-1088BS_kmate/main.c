@@ -191,12 +191,20 @@ void move_snake()
 	
 	if (!(is_concluded))
 	{
-		uint8_t i;
-		for (i = (snake_length - 1); i > 0; i--)
+		uint8_t i = snake_length - 1;
+		uint8_t snake_head_proposed = snake_head_proposed_y*10 + snake_head_proposed_x;
+		
+		if (fruit_position == snake_head_proposed)
+		{
+			snake_body[snake_length] = snake_body[i];
+			fruit_position = spawn_fruit();
+		}
+		
+		for (i; i > 0; i--)
 		{
 			snake_body[i] = snake_body[i - 1];
 		}
-		snake_body[i] = snake_head_proposed_y*10 + snake_head_proposed_x;
+		snake_body[i] = snake_head_proposed;
 	}
 }
 
@@ -241,18 +249,18 @@ uint8_t spawn_fruit()
 }
 
 /* Interrupt */
-ISR(TIMER2_OVF_vect)						// Roughly 448* per second
+ISR(TIMER2_OVF_vect)							// Roughly 448* per second
 {
-	if (!(counter_byte % 25))				// Roughly 20* per second
+	if (!(counter_byte % 25))					// Roughly 20* per second
 	{
 		read_joystick_input();
 	}
 	
-	if (!(--counter_byte))					// Roughly 2* per second
+	if (!(--counter_byte || is_concluded))	// Roughly 2* per second
 	{
 		advance_game_state();
 	}
 	
-	row_of_bits = 1 << (counter_byte % 8);	// Roughly 61* full cycles per second
+	row_of_bits = 1 << (counter_byte % 8);		// Roughly 61* full cycles per second
 	push_to_matrix(0x01, row_of_bits);
 }
