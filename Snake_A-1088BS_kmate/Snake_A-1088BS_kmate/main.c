@@ -196,7 +196,7 @@ void move_snake()
 		
 		if (fruit_position == snake_head_proposed)
 		{
-			snake_body[snake_length] = snake_body[i];
+			snake_body[snake_length++] = snake_body[i];
 			fruit_position = spawn_fruit();
 		}
 		
@@ -204,6 +204,7 @@ void move_snake()
 		{
 			snake_body[i] = snake_body[i - 1];
 		}
+		
 		snake_body[i] = snake_head_proposed;
 	}
 }
