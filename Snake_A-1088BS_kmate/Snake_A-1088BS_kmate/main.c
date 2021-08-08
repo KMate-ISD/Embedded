@@ -139,16 +139,16 @@ void initialize_game_model()
 }
 
 /* Timed behaviour */
-void push_to_matrix(uint8_t column_of_bits, uint8_t active_row)
+void push_to_matrix(uint8_t active_row, uint8_t row_of_bits)
 {	
 	uint8_t i;
 	for (i = 0; i < 8; i++)
 	{
 		/* Send bit to serial pins */
-		uint8_t column = (column_of_bits >> i) & 0x01;
 		uint8_t row = (active_row >> i) & 0x01;
+		uint8_t column = (row_of_bits >> i) & 0x01;
 		PORTD &= SER_A_R & SER_B_R;
-		PORTD |= (column << SER_A) | (row << SER_B);
+		PORTD |= (row << SER_B) | (column << SER_A);
 		
 		/* SH_CP LOW-TO-HIGH (Push to shift register) */
 		PORTD &= SRCLK_R;
@@ -321,5 +321,5 @@ ISR(TIMER2_OVF_vect)							// Roughly 448* per second
 	}
 	
 	active_row = counter_byte % 8;		// Roughly 61* full cycles per second
-	push_to_matrix(game_field[active_row], (1 << active_row));
+	push_to_matrix((1 << active_row), game_field[active_row]);
 }
