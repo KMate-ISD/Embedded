@@ -47,6 +47,7 @@ uint8_t row_of_bits = 0;	// *** 3bit | Marks the active row on the LED matrix
 uint8_t seed;				// Random seed
 
 /* Game model */
+int8_t score;				// *** ?bit
 uint8_t direction;			// *** 2bit | UP, LEFT, DOWN, RIGHT: 0, 1, 2, 3
 uint8_t fruit_position;		// *** 5bit
 uint8_t game_field[8];		// 8byte || unnecessary? see snake_body
@@ -129,6 +130,7 @@ void initialize_game_model()
 	game_field[6] = 0x80;
 	game_field[7] = 0x80;
 	fruit_position = spawn_fruit();
+	score = 0;
 	project_game_status_onto_game_field();
 }
 
@@ -204,10 +206,11 @@ void move_snake()
 		{
 			snake_body[snake_length++] = snake_body[i];
 			is_grown = 1;
+			score++;
 			fruit_position = spawn_fruit();
 		}
 		
-		for (i; i > 0; i--)
+		for (; i > 0; i--)
 		{
 			snake_body[i] = snake_body[i - 1];
 		}
