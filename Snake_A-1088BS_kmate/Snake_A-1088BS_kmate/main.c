@@ -52,7 +52,7 @@ uint8_t fruit_position;		// *** 5bit
 uint8_t game_field[8];		// 8byte || unnecessary? see snake_body
 uint8_t snake_body[64];		// *** 64*5bit || 64bit + 64*2bit + 5bit (is_set + direction + head_position)?
 uint8_t snake_length;		// *** 5bit
-uint8_t is_concluded;				// *** 1bit
+uint8_t is_concluded;		// *** 1bit
 
 /* is_concluded + direction + fruit_position? -> 8bit -> 1byte
  * snake_body -> 192bit -> 24byte
@@ -75,6 +75,8 @@ void advance_game_state(void);
 
 /* Game mechanics */
 void move_snake(void);
+void project_game_status_onto_game_field(void);
+void project_game_status_changes_onto_game_field(uint8_t, uint8_t, uint8_t);
 uint8_t check_collision(uint8_t, uint8_t);
 uint8_t check_victory_condition(void);
 uint8_t spawn_fruit(void);
@@ -127,6 +129,7 @@ void initialize_game_model()
 	game_field[6] = 0x80;
 	game_field[7] = 0x80;
 	fruit_position = spawn_fruit();
+	project_game_status_onto_game_field();
 }
 
 /* Timed behaviour */
@@ -168,6 +171,8 @@ void advance_game_state()
 /* Game mechanics */
 void move_snake()
 {
+	uint8_t is_grown = 0;
+	uint8_t old_tail = 0;
 	uint8_t snake_head_proposed_y = snake_body[0] / 10;
 	uint8_t snake_head_proposed_x = snake_body[0] % 10;
 	
@@ -193,10 +198,12 @@ void move_snake()
 	{
 		uint8_t i = snake_length - 1;
 		uint8_t snake_head_proposed = snake_head_proposed_y*10 + snake_head_proposed_x;
+		old_tail = snake_body[i];
 		
 		if (fruit_position == snake_head_proposed)
 		{
 			snake_body[snake_length++] = snake_body[i];
+			is_grown = 1;
 			fruit_position = spawn_fruit();
 		}
 		
@@ -206,6 +213,49 @@ void move_snake()
 		}
 		
 		snake_body[i] = snake_head_proposed;
+	}
+	
+	project_game_status_changes_onto_game_field(snake_body[0], old_tail, is_grown);
+}
+
+void project_game_status_onto_game_field()
+{
+	uint8_t i;
+	uint8_t fruit_y = fruit_position / 10;
+	uint8_t fruit_x = fruit_position % 10;
+	uint8_t snake_cell_y;
+	uint8_t snake_cell_x;
+	
+	for (i = 0; i < 8; i++)
+	{
+		snake_body[i] = 0;
+	}
+	
+	game_field[fruit_y] |= (1 << (7 - fruit_x));
+		
+	for (i = 0; i < snake_length; i++)
+	{
+		snake_cell_y = snake_body[i] / 10;
+		snake_cell_x = snake_body[i] % 10;
+		game_field[snake_cell_y] |= (1 << (7 - snake_cell_x));
+	}
+}
+
+void project_game_status_changes_onto_game_field(uint8_t snake_head, uint8_t old_tail, uint8_t is_grown)
+{
+	uint8_t fruit_y = fruit_position / 10;
+	uint8_t fruit_x = fruit_position % 10;
+	uint8_t snake_head_y = snake_head / 10;
+	uint8_t snake_head_x = snake_head % 10;
+	uint8_t old_tail_y = old_tail / 10;
+	uint8_t old_tail_x = old_tail % 10;
+	
+	game_field[fruit_y] |= (1 << (7 - fruit_x));
+	game_field[snake_head_y] |= (1 << (7 - snake_head_x));
+	
+	if (!(is_grown))
+	{
+		game_field[old_tail_y] &= ~(1 << (7 - old_tail_x));
 	}
 }
 
