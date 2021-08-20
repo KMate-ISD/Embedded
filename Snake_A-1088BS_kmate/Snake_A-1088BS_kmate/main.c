@@ -117,6 +117,7 @@ void initialize_ports()
 {
     DDRD |= (1 << RCLK) | (1 << SRCLK) | (1 << SER_A) | (1 << SER_B);
 	DDRB &= ~((1 << D_UP) | (1 << D_LEFT) | (1 << D_DOWN) | (1 << D_RIGHT));
+	//Serial.begin(9600);
 }
 
 void initialize_timer2_overflow()
@@ -135,7 +136,7 @@ void initialize_game_model()
     snake_body[1] = 60;
     snake_body[2] = 70;
     snake_length = 3;
-    direction = 3;
+    direction = 0;
     game_field[5] = 0x80;
     game_field[6] = 0x80;
     game_field[7] = 0x80;
@@ -169,22 +170,27 @@ void push_to_matrix(uint8_t active_row, uint8_t row_of_bits)
 
 void read_joystick_input()
 {
-	if ((PINB >> D_UP) & 0x01)
+	if (((PINB >> D_UP) & 0x01) && (direction != 2))
 	{
 		direction = 0;
 	}
-	else if ((PINB >> D_LEFT) & 0x01)
+	else if (((PINB >> D_LEFT) & 0x01) && (direction != 3))
 	{
 		direction = 1;
 	}
-	else if ((PINB >> D_DOWN) & 0x01)
+	else if (((PINB >> D_DOWN) & 0x01) && (direction != 0))
 	{
 		direction = 2;
 	}
-	else if ((PINB >> D_RIGHT) & 0x01)
+	else if (((PINB >> D_RIGHT) & 0x01) && (direction != 1))
 	{
 		direction = 3;
 	}
+    /*Serial.println((PINB >> D_UP) & 0x01);
+    Serial.println((PINB >> D_LEFT) & 0x01);
+    Serial.println((PINB >> D_DOWN) & 0x01);
+    Serial.println((PINB >> D_RIGHT) & 0x01);
+    Serial.println();*/
 }
 
 void advance_game_state()
