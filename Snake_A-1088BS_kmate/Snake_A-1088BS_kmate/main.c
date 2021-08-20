@@ -76,6 +76,7 @@ void read_joystick_input(void);
 void advance_game_state(void);
 
 /* Game mechanics */
+void grow_snake(void);
 void move_snake(void);
 void project_game_status_onto_game_field(void);
 void project_game_status_changes_onto_game_field(uint8_t, uint8_t, uint8_t);
@@ -128,7 +129,7 @@ void initialize_game_model()
     snake_body[1] = 60;
     snake_body[2] = 70;
     snake_length = 3;
-    direction = 3;
+    direction = 0;
     game_field[5] = 0x80;
     game_field[6] = 0x80;
     game_field[7] = 0x80;
@@ -175,6 +176,11 @@ void advance_game_state()
 }
 
 /* Game mechanics */
+void grow_snake()
+{
+	
+}
+
 void move_snake()
 {
     uint8_t is_grown = 0;
@@ -220,9 +226,9 @@ void move_snake()
         }
         
         snake_body[i] = snake_head_proposed;
+		
+        project_game_status_changes_onto_game_field(snake_body[0], old_tail, is_grown);
     }
-    
-    project_game_status_changes_onto_game_field(snake_body[0], old_tail, is_grown);
 }
 
 void project_game_status_onto_game_field()
