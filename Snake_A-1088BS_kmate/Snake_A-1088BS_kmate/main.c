@@ -128,7 +128,7 @@ void initialize_game_model()
     snake_body[1] = 60;
     snake_body[2] = 70;
     snake_length = 3;
-    direction = 0;
+    direction = 3;
     game_field[5] = 0x80;
     game_field[6] = 0x80;
     game_field[7] = 0x80;
@@ -269,8 +269,8 @@ void project_game_status_changes_onto_game_field(uint8_t snake_head, uint8_t old
 uint8_t check_collision(uint8_t snake_head_proposed_y, uint8_t snake_head_proposed_x)
 {
     if (((snake_head_proposed_y*10 / 7) > 10) ||
-        ((snake_head_proposed_x*10 / 7) > 10) ||
-        (game_field[snake_head_proposed_y] & (1 << (7 - snake_head_proposed_x))))
+        ((snake_head_proposed_x*10 / 7) > 10) /*||
+        (game_field[snake_head_proposed_y] & (1 << (7 - snake_head_proposed_x)))*/)
     {
         return 1;
     } 
