@@ -31,6 +31,12 @@ const uint8_t SRCLK = 5;
 const uint8_t SER_A = 2;
 const uint8_t SER_B = 3;
 
+/* directions */
+const uint8_t D_UP = 0;
+const uint8_t D_LEFT = 1;
+const uint8_t D_DOWN = 2;
+const uint8_t D_RIGHT = 3;
+
 /* complements used for clearing a bit */
 const uint8_t RCLK_R = 0xEF;
 const uint8_t SRCLK_R = 0xDF;
@@ -76,7 +82,6 @@ void read_joystick_input(void);
 void advance_game_state(void);
 
 /* Game mechanics */
-void grow_snake(void);
 void move_snake(void);
 void project_game_status_onto_game_field(void);
 void project_game_status_changes_onto_game_field(uint8_t, uint8_t);
@@ -111,6 +116,7 @@ int main(void)
 void initialize_ports()
 {
     DDRD |= (1 << RCLK) | (1 << SRCLK) | (1 << SER_A) | (1 << SER_B);
+	DDRB &= ~((1 << D_UP) | (1 << D_LEFT) | (1 << D_DOWN) | (1 << D_RIGHT));
 }
 
 void initialize_timer2_overflow()
@@ -163,6 +169,22 @@ void push_to_matrix(uint8_t active_row, uint8_t row_of_bits)
 
 void read_joystick_input()
 {
+	if ((PINB >> D_UP) & 0x01)
+	{
+		direction = 0;
+	}
+	else if ((PINB >> D_LEFT) & 0x01)
+	{
+		direction = 1;
+	}
+	else if ((PINB >> D_DOWN) & 0x01)
+	{
+		direction = 2;
+	}
+	else if ((PINB >> D_RIGHT) & 0x01)
+	{
+		direction = 3;
+	}
 }
 
 void advance_game_state()
@@ -176,11 +198,6 @@ void advance_game_state()
 }
 
 /* Game mechanics */
-void grow_snake()
-{
-	
-}
-
 void move_snake()
 {
 	uint8_t fruit_eaten = 0;
