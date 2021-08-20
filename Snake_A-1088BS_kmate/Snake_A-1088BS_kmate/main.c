@@ -79,7 +79,7 @@ void advance_game_state(void);
 void grow_snake(void);
 void move_snake(void);
 void project_game_status_onto_game_field(void);
-void project_game_status_changes_onto_game_field(uint8_t, uint8_t, uint8_t);
+void project_game_status_changes_onto_game_field(uint8_t, uint8_t);
 uint8_t check_collision(uint8_t, uint8_t);
 uint8_t check_victory_condition(void);
 uint8_t spawn_fruit(void);
@@ -129,7 +129,7 @@ void initialize_game_model()
     snake_body[1] = 60;
     snake_body[2] = 70;
     snake_length = 3;
-    direction = 0;
+    direction = 3;
     game_field[5] = 0x80;
     game_field[6] = 0x80;
     game_field[7] = 0x80;
@@ -183,7 +183,7 @@ void grow_snake()
 
 void move_snake()
 {
-    uint8_t is_grown = 0;
+	uint8_t fruit_eaten = 0;
     uint8_t old_tail = 0;
     uint8_t snake_head_proposed_y = snake_body[0] / 10;
     uint8_t snake_head_proposed_x = snake_body[0] % 10;
@@ -214,8 +214,7 @@ void move_snake()
         
         if (fruit_position == snake_head_proposed)
         {
-            snake_body[snake_length++] = snake_body[i];
-            is_grown = 1;
+			fruit_eaten = 1;
             score++;
             fruit_position = spawn_fruit();
         }
@@ -227,7 +226,12 @@ void move_snake()
         
         snake_body[i] = snake_head_proposed;
 		
-        project_game_status_changes_onto_game_field(snake_body[0], old_tail, is_grown);
+        project_game_status_changes_onto_game_field(snake_body[0], old_tail);
+		
+		if (fruit_eaten)
+		{
+			snake_body[snake_length++] = snake_body[old_tail];
+		}
     }
 }
 
@@ -254,7 +258,7 @@ void project_game_status_onto_game_field()
     }
 }
 
-void project_game_status_changes_onto_game_field(uint8_t snake_head, uint8_t old_tail, uint8_t is_grown)
+void project_game_status_changes_onto_game_field(uint8_t snake_head, uint8_t old_tail)
 {
     uint8_t fruit_y = fruit_position / 10;
     uint8_t fruit_x = fruit_position % 10;
@@ -265,11 +269,7 @@ void project_game_status_changes_onto_game_field(uint8_t snake_head, uint8_t old
     
     game_field[fruit_y] |= (1 << (7 - fruit_x));
     game_field[snake_head_y] |= (1 << (7 - snake_head_x));
-    
-    if (!(is_grown))
-    {
-        game_field[old_tail_y] &= ~(1 << (7 - old_tail_x));
-    }
+    game_field[old_tail_y] &= ~(1 << (7 - old_tail_x));
 }
 
 uint8_t check_collision(uint8_t snake_head_proposed_y, uint8_t snake_head_proposed_x)
