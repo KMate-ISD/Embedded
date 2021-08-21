@@ -170,21 +170,27 @@ void push_to_matrix(uint8_t active_row, uint8_t row_of_bits)
 
 void read_joystick_input()
 {
-	if (((PINB >> D_UP) & 0x01) && (direction != 2))
+	if (direction % 2)
 	{
-		direction = 0;
+		if ((PINB >> D_UP) & 0x01)
+		{
+			direction = 0;
+		}
+		else if ((PINB >> D_DOWN) & 0x01)
+		{
+			direction = 2;
+		}
 	}
-	else if (((PINB >> D_LEFT) & 0x01) && (direction != 3))
+	else
 	{
-		direction = 1;
-	}
-	else if (((PINB >> D_DOWN) & 0x01) && (direction != 0))
-	{
-		direction = 2;
-	}
-	else if (((PINB >> D_RIGHT) & 0x01) && (direction != 1))
-	{
-		direction = 3;
+		if ((PINB >> D_LEFT) & 0x01)
+		{
+			direction = 1;
+		}
+		else if ((PINB >> D_RIGHT) & 0x01)
+		{
+			direction = 3;
+		}	
 	}
     /*Serial.println((PINB >> D_UP) & 0x01);
     Serial.println((PINB >> D_LEFT) & 0x01);
