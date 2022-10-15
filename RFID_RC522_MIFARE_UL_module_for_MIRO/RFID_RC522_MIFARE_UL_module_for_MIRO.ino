@@ -34,6 +34,8 @@ uint8_t*  buffer_data;
 char*     buffer_message;
 MFRC522   rfid(SS_PIN, RST_PIN);
 
+String    miro        = "MIRO";
+uint8_t   reset_ul[]  = { 0x00, 0x00, 0x00, 0x00 };
 void print_hex(void);
 
 void setup()
