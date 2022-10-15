@@ -36,8 +36,11 @@ MFRC522   rfid(SS_PIN, RST_PIN);
 
 String    miro        = "MIRO";
 uint8_t   reset_ul[]  = { 0x00, 0x00, 0x00, 0x00 };
+
+/* Funcs */
 void print_hex(void);
 
+/* Init */
 void setup()
 {
   buffer_data_size  = 16 + 2;
@@ -47,8 +50,28 @@ void setup()
   Serial.begin(9600);
   SPI.begin();
   rfid.PCD_Init();
+
+  /* Store miro in buffer */
+  uint8_t i;
+  for (i = 0; i < BLOCK_SIZE; i++)
+  {
+    *(buffer_data + i) = miro[i];
+  }
+  *(buffer_data + BLOCK_SIZE) = 0;
+
+  /* Print buffer to serial */
+  i = 0;
+  Serial.println();
+  while(*(buffer_data + i))
+  {
+    Serial.print((char)*(buffer_data + i++));
+  }
+  Serial.println();
+
+  DEBUG(Serial.println("Debug mode ON.");)
 }
 
+/* Operation */
 void loop()
 {
   if (rfid.PICC_IsNewCardPresent()) // New tag in proximity of the reader
@@ -66,6 +89,7 @@ void loop()
 
       // Dump tag memory to serial (general)
       // rfid.PICC_DumpToSerial(&rfid.uid);
+      // rfid.PICC_DumpToSerial(&rfid.uid); // Does this halt at the end?
 
       // Dump tag memory to serial (UL)
       rfid.PICC_DumpMifareUltralightToSerial();
@@ -88,6 +112,7 @@ void loop()
   }
 }
 
+/* Function definitions */
 void print_hex(byte* bytes, uint8_t len)
 {
   uint8_t i;
