@@ -102,6 +102,22 @@ void loop()
         Serial.println("Done.");
       )
 
+      // Reset user blocks
+      if (RESET)
+      {
+        Serial.print("Resetting user pages");
+        uint8_t j;
+        for (j = SECTOR_START; j < BLOCK_COUNT; j++)
+        {
+          if (memcmp(buffer_data, reset_ul, BLOCK_SIZE))
+          {
+            rfid.MIFARE_Ultralight_Write(j, reset_ul, BLOCK_SIZE); 
+          }
+          Serial.print('.');
+        }
+        Serial.println(" Done.");
+      }
+
       // Dump tag memory to serial (general)
       // rfid.PICC_DumpToSerial(&rfid.uid); // Does this halt at the end?
 
