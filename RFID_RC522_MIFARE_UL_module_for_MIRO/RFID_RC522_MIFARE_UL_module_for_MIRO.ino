@@ -4,8 +4,29 @@
 /* Wiring */
 #define SS_PIN          21
 #define RST_PIN         22
+
+/* UL tag
+ * -------------------------
+ * Page 0 b0-2  UID
+ *        b3    check byte 0
+ * Page 1 b0-3  UID
+ * Page 2 b0    check byte 1
+ *        b1    internal res
+ *        b2    lock byte 0
+ *        b3    lock byte 1
+ * Page 3 b0-4  OTP
+ * Page 4-15    user defined
+ * -------------------------
+ */
+#define BLOCK_COUNT     16
 #define BLOCK_SIZE      4
+#define SECTOR_START    4
+
+/* Debug */
+#define DEBUG(x)        if (DEBUG_MODE) {x}
+#define DEBUG_MODE      0
 #define MESSAGE_SIZE    32
+#define RESET           0
 
 /* Global */
 uint8_t   buffer_data_size;
