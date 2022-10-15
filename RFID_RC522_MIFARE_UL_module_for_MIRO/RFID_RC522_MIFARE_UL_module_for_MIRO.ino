@@ -88,22 +88,10 @@ void loop()
       print_hex(rfid.uid.uidByte, rfid.uid.size);
 
       // Dump tag memory to serial (general)
-      // rfid.PICC_DumpToSerial(&rfid.uid);
       // rfid.PICC_DumpToSerial(&rfid.uid); // Does this halt at the end?
 
       // Dump tag memory to serial (UL)
       rfid.PICC_DumpMifareUltralightToSerial();
-
-      // Write block
-      // rfid.MIFARE_Ultralight_Write(7, buffer_data, sizeof(buffer_data));
-
-      // Read block
-      uint8_t sector = 7;
-      rfid.MIFARE_Read(sector, buffer_data, &buffer_data_size);
-      Serial.print("Sector ");
-      Serial.print(sector);
-      Serial.print(":");
-      print_hex(buffer_data, BLOCK_SIZE);
 
       // Halt
       rfid.PICC_HaltA();      // halt PICC
