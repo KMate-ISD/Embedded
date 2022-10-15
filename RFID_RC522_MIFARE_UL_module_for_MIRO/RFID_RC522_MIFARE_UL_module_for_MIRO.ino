@@ -87,6 +87,21 @@ void loop()
       Serial.print("UID:");
       print_hex(rfid.uid.uidByte, rfid.uid.size);
 
+      // Read pages
+      DEBUG(
+        Serial.println("Reading memory...");
+        uint8_t i;
+        for (i = 0; i < BLOCK_COUNT; i++)
+        {
+          rfid.MIFARE_Read(i, buffer_data, &buffer_data_size);
+          Serial.print(i < 10 ? "PAGE #0" : "PAGE #");
+          Serial.print(i);
+          Serial.print("\t");
+          print_hex(buffer_data, BLOCK_SIZE); 
+        }
+        Serial.println("Done.");
+      )
+
       // Dump tag memory to serial (general)
       // rfid.PICC_DumpToSerial(&rfid.uid); // Does this halt at the end?
 
