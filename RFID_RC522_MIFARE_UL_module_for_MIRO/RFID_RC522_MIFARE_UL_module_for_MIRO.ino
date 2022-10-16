@@ -47,6 +47,7 @@ uint8_t     int_mode      = FALLING;
 hw_timer_t* int_timer     = NULL;
 
 /* Funcs */
+void IRAM_ATTR ISR(void);
 void print_hex(void);
 
 /* Init */
@@ -63,6 +64,8 @@ void setup()
   /* UI setup */
   pinMode(led, OUTPUT);
   pinMode(button, INPUT);
+  attachInterrupt(button, ISR, int_mode);
+
   /* Store miro in buffer */
   uint8_t i;
   for (i = 0; i < BLOCK_SIZE; i++)
@@ -124,6 +127,12 @@ void loop()
   }
 }
 
+/* Interrupt vector */
+void IRAM_ATTR ISR()
+{
+  digitalWrite(led, led_state = button_state = !button_state);
+  DEBUG(Serial.println("Button on GPIO0 pressed.");)
+}
 /* Function definitions */
 void print_hex(byte* bytes, uint8_t len)
 {
