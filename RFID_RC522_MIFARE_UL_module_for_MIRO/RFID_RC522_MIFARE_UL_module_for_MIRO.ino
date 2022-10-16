@@ -35,6 +35,8 @@ char*     buffer_message;
 MFRC522   rfid(SS_PIN, RST_PIN);
 
 String    miro        = "MIRO";
+String    user        = "\0";
+String    pass        = "\0";
 uint8_t   reset_ul[]  = { 0x00, 0x00, 0x00, 0x00 };
 
 /* Funcs */
@@ -74,6 +76,14 @@ void setup()
 /* Operation */
 void loop()
 {
+  while (!(user[0]))
+  {
+    Serial.print("User: ");
+    while (!(Serial.available())) { }
+    user = Serial.readStringUntil('\n');
+    Serial.println(user);
+  }
+  
   if (rfid.PICC_IsNewCardPresent()) // New tag in proximity of the reader
   {
     if (rfid.PICC_ReadCardSerial()) // NUID read
@@ -106,17 +116,46 @@ void loop()
       if (RESET)
       {
         Serial.print("Resetting user pages");
-        uint8_t j;
-        for (j = SECTOR_START; j < BLOCK_COUNT; j++)
+        uint8_t i;
+        for (i = SECTOR_START; i < BLOCK_COUNT; i++)
         {
           if (memcmp(buffer_data, reset_ul, BLOCK_SIZE))
           {
-            rfid.MIFARE_Ultralight_Write(j, reset_ul, BLOCK_SIZE); 
+            rfid.MIFARE_Ultralight_Write(i, reset_ul, BLOCK_SIZE); 
           }
           Serial.print('.');
         }
         Serial.println(" Done.");
       }
+
+      // Save user_input to sector_start
+      rfid.MIFARE_Read(SECTOR_START, buffer_data, &buffer_data_size);
+      
+      char* user_buffer = (char*)malloc(BLOCK_SIZE + 1);
+      uint8_t j = 0;
+      while (user[j])
+      {
+        *(user_buffer + j) = user[j];
+        j++;
+      }
+      
+      if (memcmp(buffer_data, user_buffer, BLOCK_SIZE))
+      {
+        // Read user
+        uint8_t i;
+        for (i = 0; i < BLOCK_SIZE; i++)
+        {
+          *(buffer_data + i) = user[i];
+        }
+        *(buffer_data + BLOCK_SIZE) = 0; 
+
+        // Write to sector start
+        rfid.MIFARE_Ultralight_Write(SECTOR_START, buffer_data, BLOCK_SIZE);
+        Serial.println("User saved.");
+      }
+      
+      free(user_buffer);
+      user.clear();
 
       // Dump tag memory to serial (general)
       // rfid.PICC_DumpToSerial(&rfid.uid); // Does this halt at the end?
