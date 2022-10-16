@@ -34,12 +34,23 @@ uint8_t*  buffer_data;
 char*     buffer_message;
 MFRC522   rfid(SS_PIN, RST_PIN);
 
+/* Const */
 String    miro        = "MIRO";
 String    user        = "\0";
 String    pass        = "\0";
 uint8_t   reset_ul[]  = { 0x00, 0x00, 0x00, 0x00 };
 
+/* UI */
+uint8_t     led           = LED_BUILTIN;
+uint8_t     led_state     = 0;
+uint8_t     button        = 0;
+uint8_t     button_state  = 0;
+uint8_t     int_mode      = FALLING;
+hw_timer_t* int_timer     = NULL;
+
 /* Funcs */
+void IRAM_ATTR ISR(void);
+void IRAM_ATTR on_timer();
 void print_hex(void);
 
 /* Init */
@@ -52,6 +63,17 @@ void setup()
   Serial.begin(9600);
   SPI.begin();
   rfid.PCD_Init();
+
+  /* UI setup */
+  pinMode(led, OUTPUT);
+  pinMode(button, INPUT);
+  attachInterrupt(button, ISR, int_mode);
+
+  /* Timer setup */
+  int_timer = timerBegin(0, 80, true);
+  timerAttachInterrupt(int_timer, &on_timer, true);
+  timerAlarmWrite(int_timer, 500000, true);
+  timerAlarmEnable(int_timer); //Just Enable
 
   /* Store miro in buffer */
   uint8_t i;
@@ -168,6 +190,27 @@ void loop()
       rfid.PCD_StopCrypto1(); // stop encryption on PCD
     }
   }
+}
+
+/* Interrupt vector */
+void IRAM_ATTR ISR()
+{
+  digitalWrite(led, led_state = button_state = !button_state);
+  if (button_state)
+  {
+    if (!timerStarted(int_timer)) { timerStart(int_timer); }
+    timerRestart(int_timer);
+  }
+  else
+  {
+    timerStop(int_timer);
+  }
+  DEBUG(Serial.println("Button on GPIO0 pressed.");)
+}
+
+void IRAM_ATTR on_timer()
+{
+  if (button_state) { digitalWrite(led, led_state = !led_state); }
 }
 
 /* Function definitions */
