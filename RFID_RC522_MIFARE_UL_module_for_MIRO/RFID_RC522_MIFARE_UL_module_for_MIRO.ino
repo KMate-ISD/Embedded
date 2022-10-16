@@ -48,6 +48,7 @@ hw_timer_t* int_timer     = NULL;
 
 /* Funcs */
 void IRAM_ATTR ISR(void);
+void IRAM_ATTR on_timer();
 void print_hex(void);
 
 /* Init */
@@ -65,6 +66,12 @@ void setup()
   pinMode(led, OUTPUT);
   pinMode(button, INPUT);
   attachInterrupt(button, ISR, int_mode);
+
+  /* Timer setup */
+  int_timer = timerBegin(0, 80, true);
+  timerAttachInterrupt(int_timer, &on_timer, true);
+  timerAlarmWrite(int_timer, 500000, true);
+  timerAlarmEnable(int_timer); //Just Enable
 
   /* Store miro in buffer */
   uint8_t i;
@@ -131,8 +138,23 @@ void loop()
 void IRAM_ATTR ISR()
 {
   digitalWrite(led, led_state = button_state = !button_state);
+  if (button_state)
+  {
+    if (!timerStarted(int_timer)) { timerStart(int_timer); }
+    timerRestart(int_timer);
+  }
+  else
+  {
+    timerStop(int_timer);
+  }
   DEBUG(Serial.println("Button on GPIO0 pressed.");)
 }
+
+void IRAM_ATTR on_timer()
+{
+  if (button_state) { digitalWrite(led, led_state = !led_state); }
+}
+
 /* Function definitions */
 void print_hex(byte* bytes, uint8_t len)
 {
