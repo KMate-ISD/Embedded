@@ -34,8 +34,17 @@ uint8_t*  buffer_data;
 char*     buffer_message;
 MFRC522   rfid(SS_PIN, RST_PIN);
 
+/* Const */
 String    miro        = "MIRO";
 uint8_t   reset_ul[]  = { 0x00, 0x00, 0x00, 0x00 };
+
+/* UI */
+uint8_t     led           = LED_BUILTIN;
+uint8_t     led_state     = 0;
+uint8_t     button        = 0;
+uint8_t     button_state  = 0;
+uint8_t     int_mode      = FALLING;
+hw_timer_t* int_timer     = NULL;
 
 /* Funcs */
 void print_hex(void);
@@ -51,6 +60,9 @@ void setup()
   SPI.begin();
   rfid.PCD_Init();
 
+  /* UI setup */
+  pinMode(led, OUTPUT);
+  pinMode(button, INPUT);
   /* Store miro in buffer */
   uint8_t i;
   for (i = 0; i < BLOCK_SIZE; i++)
