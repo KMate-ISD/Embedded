@@ -116,6 +116,43 @@ class Miro_rfid:
             raise
 
 try:
-        pass
+    if __name__ == "__main__":
+        params = [
+            "-B", # "--blocks"
+            "-m", # "--mode"
+            "-s", # "--start"
+            "-t"] # "--text"
+
+        args = sys.argv[:]
+        args.pop(0)
+        flags = args[::2]
+        args = args[1::2]
+        cla = dict(zip(flags, args))
+        print(f"Arguments count: {len(cla)}")
+
+        for flag in params:
+            if flag in cla:
+                if flag == "-s":
+                    cla[flag] = int(cla[flag])
+                elif flag == "-B":
+                    cla[flag] = [int(i, 16) for i in cla[flag]]
+                else:
+                    pass
+        print(cla)
+
+        reader = MFRC522()
+        miro = Miro_rfid(reader)
+
+        if "-m" in cla:
+            if cla["-m"] == 'w' and "-t" in cla and "-s" in cla:
+                if cla["-s"] < 4:
+                    raise Exception("Editing manufacturer data, lock bytes or OTP bytes is prohibited. Exiting script.")
+                miro.write(cla["-t"], cla["-s"])
+            elif cla["-m"] == 'r' and "-B" in cla:
+                miro.read(cla["-B"])
+
+except Exception as e:
+    print(f"{e}")
 finally:
-        GPIO.cleanup()
+    GPIO.cleanup()
+    print("Exiting script.")
