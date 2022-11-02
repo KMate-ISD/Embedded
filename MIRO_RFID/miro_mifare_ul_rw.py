@@ -99,26 +99,30 @@ class Miro_rfid:
 
     def read(self, blocks):
         try:
+            self.led.blue_on()
             blocks = [int(c) for c in blocks]
             id, data = self.__read_block_loop(blocks)
             print(id)
             self.print_data_readable(data, blocks[0])
-            self.led.green_pulse()
+            self.led.blue_off()
+            self.led.green_pulse(0.25)
         except Exception:
-            self.led.red_pulse()
+            self.led.red_pulse(0.25)
             raise
 
     def write(self, text, block_initial):
         try:
+            self.led.blue_on()
             data = self.break_down_text(text)
             block_count = len(data)
             blocks = range(block_initial, block_count + block_initial)
             id, data = self.__write_block_loop(data, blocks)
             print(id)
             self.print_data_readable(data, block_initial)
-            self.led.green_flash(0.100, 10)
+            self.led.blue_off()
+            self.led.green_flash(0.05, block_count)
         except Exception:
-            self.led.red_flash(0.100, 10)
+            self.led.red_flash(0.05, 10)
             raise
 
 try:
@@ -159,7 +163,7 @@ try:
                 miro.read(cla["-B"])
 
 except Exception as e:
-    led.red_pulse()
+    led.red_pulse(1)
     print(f"{e}")
 finally:
     led.blue_pulse(0.1)
