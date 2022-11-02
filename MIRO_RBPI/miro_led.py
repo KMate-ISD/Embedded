@@ -3,20 +3,20 @@ import sys
 from time import sleep
 
 class miro_led:
-    def __init__(self, led_pins, numbering=GPIO.BOARD):
+    def __init__(self, led_pins, numbering=GPIO.BOARD, init_value=GPIO.LOW):
         self.pins = led_pins
         self.numbering = numbering
         self.leds = {
-            "red"   : self.pins[0],
-            "green" : self.pins[1],
-            "blue"  : self.pins[2]}
-        self.__init_pins()
-    
-    def __init_pins(self, pin_mode=GPIO.OUT, initial=GPIO.LOW):
+            "red"   : [self.pins[0], init_value],
+            "green" : [self.pins[1], init_value],
+            "blue"  : [self.pins[2], init_value]}
+        self.__init_pins(init_value)
+
+    def __init_pins(self, pin_mode=GPIO.OUT):
         GPIO.setmode(self.numbering)
-        for pin in self.pins:
-            GPIO.setup(pin, pin_mode, initial)
-    
+        for key in self.leds:
+            GPIO.setup(self.leds[key][0], pin_mode, initial=self.leds[key][1])
+
     @staticmethod
     def __set_pin(pin):
         GPIO.output(pin, GPIO.HIGH)
@@ -25,48 +25,53 @@ class miro_led:
     def __clear_pin(pin):
         GPIO.output(pin, GPIO.LOW)
 
-    def change_red(self, pin):
-        self.leds["red"] = pin
-    def change_green(self, pin):
-        self.leds["green"] = pin
-    def change_blue(self, pin):
-        self.leds["blue"] = pin
+    def __led_toggle(self, color):
+        led = self.leds[color]
+        led[1] = not led[1]
+        GPIO.output(led[0], led[1])
+
+    def __led_flash(self, color, rest, cycles):
+        for i in range(cycles):
+            self.__led_toggle(color)
+            sleep(rest)
+        if cycles%2:
+            self.__clear_pin(self.leds[color][0])
+
+    def __led_pulse(self, color, rest):
+        if not self.leds[color][1]:
+            self.__led_toggle(color)
+            sleep(rest)
+        self.__led_toggle(color)
 
     def red_off(self):
-        self.__clear_pin(self.leds["red"])
+        self.__clear_pin(self.leds["red"][0])
     def green_off(self):
-        self.__clear_pin(self.leds["green"])
+        self.__clear_pin(self.leds["green"][0])
     def blue_off(self):
-        self.__clear_pin(self.leds["blue"])
+        self.__clear_pin(self.leds["blue"][0])
 
     def red_on(self):
-        self.__set_pin(self.leds["red"])
+        self.__set_pin(self.leds["red"][0])
     def green_on(self):
-        self.__set_pin(self.leds["green"])
+        self.__set_pin(self.leds["green"][0])
     def blue_on(self):
-        self.__set_pin(self.leds["blue"])
+        self.__set_pin(self.leds["blue"][0])
 
-if __name__ == "__main__":
-    params = [
-        "-L", # "--leds"
-        "-r", # "--red"
-        "-g", # "--green"
-        "-b", # "--blue"
-        "-s"] # "--sleep"
+    def red_flash(self, rest=0.2, cycles=10):
+        self.__led_flash("red", rest, cycles)
+    def green_flash(self, rest=0.2, cycles=10):
+        self.__led_flash("green", rest, cycles)
+    def blue_flash(self, rest=0.2, cycles=10):
+        self.__led_flash("blue", rest, cycles)
 
-    args = sys.argv[:]
-    args.pop(0)
-    flags = args[::2]
-    args = args[1::2]
-    cla = dict(zip(flags, args))
-    print(f"Arguments count: {len(cla)}")
-    
-    for flag in params:
-        if flag in cla:
-            if flag == "-L":
-                cla[flag] = [int(i, 16) for i in cla[flag]]
-            else:
-                cla[flag] = int(cla[flag])
-    print(cla)
+    def red_pulse(self, rest=1):
+        self.__led_pulse("red", rest)
+    def green_pulse(self, rest=1):
+        self.__led_pulse("green", rest)
+    def blue_pulse(self, rest=1):
+        self.__led_pulse("blue", rest)
 
-    #led = miro_led(cla["-L"])
+    def led_off(self):
+        self.red_off()
+        self.green_off()
+        self.blue_off()
