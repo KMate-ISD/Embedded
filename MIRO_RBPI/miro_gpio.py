@@ -39,8 +39,8 @@ class Miro_output(Miro_gpio):
         for pin in self.pins:
             super().setup(pin, initial=initial)
 
-    def set_pin(pin):
+    def set_pin(self, pin):
         GPIO.output(pin, GPIO.HIGH)
 
-    def clear_pin(pin):
+    def clear_pin(self, pin):
         GPIO.output(pin, GPIO.LOW)
