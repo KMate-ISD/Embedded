@@ -5,7 +5,7 @@ class Miro_btn(Miro_input):
     def __init__(self, *pins, numbering=GPIO.BOARD, setup=1) -> None:
         super().__init__(*pins, numbering=numbering)
         if setup and pins:
-            super().setup_all()
+            self.setup_all()
     
     def add_handler(self, pin, event, *args):
         for callback in args:
