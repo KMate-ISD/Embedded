@@ -2,7 +2,7 @@
 
 import RPi.GPIO as GPIO
 import sys
-from miro_led import Miro_led
+from miro_rgb import Miro_rgb
 from mfrc522 import MFRC522
 
 class Miro_rfid:
@@ -151,7 +151,7 @@ try:
         print(cla)
 
         reader = MFRC522()
-        led = Miro_led([11, 13, 15])
+        led = Miro_rgb(11, 13, 15)
         miro = Miro_rfid(reader, led)
 
         if "-m" in cla:
