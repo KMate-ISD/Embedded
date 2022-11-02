@@ -116,9 +116,9 @@ class Miro_rfid:
             id, data = self.__write_block_loop(data, blocks)
             print(id)
             self.print_data_readable(data, block_initial)
-            self.led.green_flash(0.25)
+            self.led.green_flash(0.100, 10)
         except Exception:
-            self.led.red_flash(0.25)
+            self.led.red_flash(0.100, 10)
             raise
 
 try:
@@ -162,6 +162,5 @@ except Exception as e:
     led.red_pulse()
     print(f"{e}")
 finally:
-    led.blue_pulse(0.25)
+    led.blue_pulse(0.1)
     GPIO.cleanup()
-    print("Exiting script.")
