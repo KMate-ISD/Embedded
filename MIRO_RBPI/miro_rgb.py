@@ -1,29 +1,14 @@
 import RPi.GPIO as GPIO
 import sys
+from miro_gpio import Miro_output
 from time import sleep
 
-class Miro_led:
-    def __init__(self, led_pins, numbering=GPIO.BOARD, init_value=GPIO.LOW):
-        self.pins = led_pins
-        self.numbering = numbering
-        self.leds = {
-            "red"   : [self.pins[0], init_value],
-            "green" : [self.pins[1], init_value],
-            "blue"  : [self.pins[2], init_value]}
-        self.__init_pins(init_value)
-
-    def __init_pins(self, pin_mode=GPIO.OUT):
-        GPIO.setmode(self.numbering)
-        for key in self.leds:
-            GPIO.setup(self.leds[key][0], pin_mode, initial=self.leds[key][1])
-
-    @staticmethod
-    def __set_pin(pin):
-        GPIO.output(pin, GPIO.HIGH)
-
-    @staticmethod
-    def __clear_pin(pin):
-        GPIO.output(pin, GPIO.LOW)
+class Miro_rgb(Miro_output):
+    def __init__(self, *pins, numbering=GPIO.BOARD, initial=GPIO.LOW) -> None:
+        super().__init__(*pins, numbering=numbering)
+        self.leds = dict(zip(("red", "green", "blue"), zip(pins[:3], [initial]*3)))
+        self.leds = {key:list(self.leds[key]) for key in self.leds}
+        self.setup_all(initial)
 
     def __led_toggle(self, color):
         led = self.leds[color]
@@ -35,7 +20,7 @@ class Miro_led:
             self.__led_toggle(color)
             sleep(rest)
         if cycles%2:
-            self.__clear_pin(self.leds[color][0])
+            self.clear_pin(self.leds[color][0])
 
     def __led_pulse(self, color, rest):
         if not self.leds[color][1]:
@@ -44,18 +29,18 @@ class Miro_led:
         self.__led_toggle(color)
 
     def red_off(self):
-        self.__clear_pin(self.leds["red"][0])
+        self.clear_pin(self.leds["red"][0])
     def green_off(self):
-        self.__clear_pin(self.leds["green"][0])
+        self.clear_pin(self.leds["green"][0])
     def blue_off(self):
-        self.__clear_pin(self.leds["blue"][0])
+        self.clear_pin(self.leds["blue"][0])
 
     def red_on(self):
-        self.__set_pin(self.leds["red"][0])
+        self.set_pin(self.leds["red"][0])
     def green_on(self):
-        self.__set_pin(self.leds["green"][0])
+        self.set_pin(self.leds["green"][0])
     def blue_on(self):
-        self.__set_pin(self.leds["blue"][0])
+        self.set_pin(self.leds["blue"][0])
 
     def red_flash(self, rest=0.2, cycles=10):
         self.__led_flash("red", rest, cycles)
@@ -71,15 +56,10 @@ class Miro_led:
     def blue_pulse(self, rest=1):
         self.__led_pulse("blue", rest)
 
-    def led_off(self):
-        self.red_off()
-        self.green_off()
-        self.blue_off()
-
 try:
     if __name__ == "__main__":
         params = [
-            "-L", # "--leds"
+            "-L", # "--leds 11 13 15"
             "-r", # "--red"
             "-g", # "--green"
             "-b", # "--blue"
@@ -105,7 +85,7 @@ try:
         leds = cla["-L"]
         rest = cla["-s"]
 
-        led = Miro_led(leds)
+        led = Miro_rgb(*leds)
 
         led.red_flash(rest)
         led.green_flash(rest)
