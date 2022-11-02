@@ -105,7 +105,7 @@ try:
         leds = cla["-L"]
         rest = cla["-s"]
 
-        led = miro_led(leds)
+        led = Miro_led(leds)
 
         led.red_flash(rest)
         led.green_flash(rest)
