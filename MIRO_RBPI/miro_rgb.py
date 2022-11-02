@@ -20,27 +20,35 @@ class Miro_rgb(Miro_output):
             self.__led_toggle(color)
             sleep(rest)
         if cycles%2:
-            self.clear_pin(self.leds[color][0])
+            self.__led_off(color)
 
     def __led_pulse(self, color, rest):
         if not self.leds[color][1]:
             self.__led_toggle(color)
             sleep(rest)
         self.__led_toggle(color)
+    
+    def __led_off(self, color):
+        self.leds[color][1] = 0
+        self.clear_pin(self.leds[color][0])
+    
+    def __led_on(self, color):
+        self.leds[color][1] = 1
+        self.set_pin(self.leds[color][0])
 
     def red_off(self):
-        self.clear_pin(self.leds["red"][0])
+        self.__led_off("red")
     def green_off(self):
-        self.clear_pin(self.leds["green"][0])
+        self.__led_off("green")
     def blue_off(self):
-        self.clear_pin(self.leds["blue"][0])
+        self.__led_off("blue")
 
     def red_on(self):
-        self.set_pin(self.leds["red"][0])
+        self.__led_on("red")
     def green_on(self):
-        self.set_pin(self.leds["green"][0])
+        self.__led_on("green")
     def blue_on(self):
-        self.set_pin(self.leds["blue"][0])
+        self.__led_on("blue")
 
     def red_flash(self, rest=0.2, cycles=10):
         self.__led_flash("red", rest, cycles)
