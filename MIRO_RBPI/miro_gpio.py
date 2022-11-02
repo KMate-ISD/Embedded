@@ -17,7 +17,7 @@ class Miro_gpio:
 
 
 class Miro_input(Miro_gpio):
-    def __init__(self, *pins, numbering=GPIO.BOARD) -> None:
+    def __init__(self, *pins, numbering) -> None:
         super().__init__(*pins, numbering=numbering, pin_mode=GPIO.IN)
         self.callbacks = []
     
@@ -32,9 +32,15 @@ class Miro_input(Miro_gpio):
     
 
 class Miro_output(Miro_gpio):
-    def __init__(self, *pins, numbering=GPIO.BOARD) -> None:
+    def __init__(self, *pins, numbering) -> None:
         super().__init__(*pins, numbering=numbering, pin_mode=GPIO.OUT)
     
     def setup_all(self, initial=GPIO.LOW):
         for pin in self.pins:
-            super().__setup(pin, initial=initial)
+            super().setup(pin, initial=initial)
+
+    def set_pin(pin):
+        GPIO.output(pin, GPIO.HIGH)
+
+    def clear_pin(pin):
+        GPIO.output(pin, GPIO.LOW)
