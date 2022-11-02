@@ -2,11 +2,13 @@
 
 import RPi.GPIO as GPIO
 import sys
+from miro_led import Miro_led
 from mfrc522 import MFRC522
 
 class Miro_rfid:
-    def __init__(self, reader):
+    def __init__(self, reader, led):
         self.reader = reader
+        self.led = led
 
     @staticmethod
     def __uid_to_num(uid):
@@ -101,7 +103,9 @@ class Miro_rfid:
             id, data = self.__read_block_loop(blocks)
             print(id)
             self.print_data_readable(data, blocks[0])
+            self.led.green_pulse()
         except Exception:
+            self.led.red_pulse()
             raise
 
     def write(self, text, block_initial):
@@ -112,7 +116,9 @@ class Miro_rfid:
             id, data = self.__write_block_loop(data, blocks)
             print(id)
             self.print_data_readable(data, block_initial)
+            self.led.green_flash(0.25)
         except Exception:
+            self.led.red_flash(0.25)
             raise
 
 try:
@@ -141,7 +147,8 @@ try:
         print(cla)
 
         reader = MFRC522()
-        miro = Miro_rfid(reader)
+        led = Miro_led([11, 13, 15])
+        miro = Miro_rfid(reader, led)
 
         if "-m" in cla:
             if cla["-m"] == 'w' and "-t" in cla and "-s" in cla:
@@ -152,7 +159,9 @@ try:
                 miro.read(cla["-B"])
 
 except Exception as e:
+    led.red_pulse()
     print(f"{e}")
 finally:
+    led.blue_pulse(0.25)
     GPIO.cleanup()
     print("Exiting script.")
