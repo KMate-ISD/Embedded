@@ -2,7 +2,7 @@ import RPi.GPIO as GPIO
 import sys
 from time import sleep
 
-class miro_led:
+class Miro_led:
     def __init__(self, led_pins, numbering=GPIO.BOARD, init_value=GPIO.LOW):
         self.pins = led_pins
         self.numbering = numbering
