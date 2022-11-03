@@ -24,8 +24,8 @@ try:
         rgb = Miro_rgb(11, 13, 15)
         def cb(channel):
             print("Button pressed")
+            rgb.blue_flash()
         btn.add_handler(pin, GPIO.RISING, cb)
-        btn.add_handler(pin, GPIO.RISING, rgb.blue_flash)
         
         exit = input("Press 'Enter' to remove handlers...\n")
         btn.remove_handlers(pin)
