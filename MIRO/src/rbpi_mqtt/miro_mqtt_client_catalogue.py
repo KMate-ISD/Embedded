@@ -33,5 +33,5 @@ class Miro_mqtt_client_catalogue():
     def on_message(self, client, userdata, msg):
         Miro_mqtt_client_catalogue.display_message(msg)
         Miro_mqtt_client_catalogue.display_message_hex(msg)
-        if msg.topic == "auth/user" and msg.paylod == "OK":
+        if msg.topic == "auth/user" and msg.payload == "OK":
             print("save pw, send confirm")
