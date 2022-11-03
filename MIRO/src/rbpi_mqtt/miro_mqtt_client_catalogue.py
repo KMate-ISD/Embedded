@@ -11,6 +11,11 @@ class Miro_mqtt_client_catalogue():
     def display_message(msg):
         print(f"{msg.topic} | {msg.payload}")
 
+    @staticmethod
+    def display_message_hex(msg):
+        pl = [f"{msg.payload[i]:#04x}\n" if i%4==3 else f"{msg.payload[i]:#04x} " for i in range(len(msg.payload))]
+        print(''.join(pl))
+
     def add_client(self, **credentials):
         self.clients.update({key : mqtt.Client() for key in credentials})
         for key in self.clients:
@@ -27,6 +32,6 @@ class Miro_mqtt_client_catalogue():
 
     def on_message(self, client, userdata, msg):
         Miro_mqtt_client_catalogue.display_message(msg)
-        pl = [f"{msg.payload[i]:#04x}\n" if i%4==3 else f"{msg.payload[i]:#04x} " for i in range(len(msg.payload))]
-        print(''.join(pl))
-
+        Miro_mqtt_client_catalogue.display_message_hex(msg)
+        if msg.topic == "auth/user" and msg.paylod == "OK":
+            print("save pw, send confirm")
