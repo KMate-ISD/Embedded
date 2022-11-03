@@ -1,7 +1,7 @@
 from src.rbpi_mqtt.miro_mqtt_client_catalogue import Miro_mqtt_client_catalogue
 
 try:
-    mr = Miro_mqtt_client_catalogue("192.168.1.85", 1883, "admin/debug")
+    mr = Miro_mqtt_client_catalogue("192.168.1.85", 1883, "admin/debug", "auth/user")
     mr.add_client(kmate_mqtt="lorimmer_mqtt")
     mr.clients["kmate_mqtt"].on_connect = mr.on_connect
     mr.clients["kmate_mqtt"].on_message = mr.on_message
