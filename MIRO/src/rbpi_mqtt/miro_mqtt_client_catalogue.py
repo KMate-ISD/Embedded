@@ -30,19 +30,3 @@ class Miro_mqtt_client_catalogue():
         pl = [f"{msg.payload[i]:#04x}\n" if i%4==3 else f"{msg.payload[i]:#04x} " for i in range(len(msg.payload))]
         print(''.join(pl))
 
-try:
-    mr = Miro_mqtt_client_catalogue("192.168.1.85", 1883, "admin/debug")
-    mr.add_client(kmate_mqtt="lorimmer_mqtt")
-    mr.clients["kmate_mqtt"].on_connect = mr.on_connect
-    mr.clients["kmate_mqtt"].on_message = mr.on_message
-    mr.connect_client("kmate_mqtt")
-    for topic in mr.topics:
-        mr.clients["kmate_mqtt"].subscribe(topic)
-    mr.clients["kmate_mqtt"].loop_start()
-    input("Press ENTER to exit...")
-
-except Exception as e:
-    print(f"{e}")
-finally:
-    mr.clients["kmate_mqtt"].disconnect()
-    mr.clients["kmate_mqtt"].loop_stop()
