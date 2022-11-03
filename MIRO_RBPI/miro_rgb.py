@@ -1,68 +1,48 @@
+from enum import Enum
 import RPi.GPIO as GPIO
 import sys
-from miro_gpio import Miro_output
+from miro_led import Miro_led
 from time import sleep
 
-class Miro_rgb(Miro_output):
+class Miro_rgb(Miro_led):
     def __init__(self, *pins, numbering=GPIO.BOARD, initial=GPIO.LOW) -> None:
-        super().__init__(*pins, numbering=numbering)
-        self.leds = dict(zip(("red", "green", "blue"), zip(pins[:3], [initial]*3)))
-        self.leds = {key:list(self.leds[key]) for key in self.leds}
+        if len(pins) > 3:
+            raise Exception("Too many pins. Add 3 in RGB order.")
+        super().__init__(*pins, numbering=numbering, initial=initial)
         self.setup_all(initial)
 
-    def __led_toggle(self, color):
-        led = self.leds[color]
-        led[1] = not led[1]
-        GPIO.output(led[0], led[1])
-
-    def __led_flash(self, color, rest, cycles):
-        for i in range(cycles):
-            self.__led_toggle(color)
-            sleep(rest)
-        if cycles%2:
-            self.__led_off(color)
-
-    def __led_pulse(self, color, rest):
-        if not self.leds[color][1]:
-            self.__led_toggle(color)
-            sleep(rest)
-        self.__led_toggle(color)
-    
-    def __led_off(self, color):
-        self.leds[color][1] = 0
-        self.clear_pin(self.leds[color][0])
-    
-    def __led_on(self, color):
-        self.leds[color][1] = 1
-        self.set_pin(self.leds[color][0])
-
     def red_off(self):
-        self.__led_off("red")
+        self.__led_off(Color.RED)
     def green_off(self):
-        self.__led_off("green")
+        self.__led_off(Color.GREEN)
     def blue_off(self):
-        self.__led_off("blue")
+        self.__led_off(Color.BLUE)
 
     def red_on(self):
-        self.__led_on("red")
+        self.__led_on(Color.RED)
     def green_on(self):
-        self.__led_on("green")
+        self.__led_on(Color.GREEN)
     def blue_on(self):
-        self.__led_on("blue")
+        self.__led_on(Color.BLUE)
 
     def red_flash(self, rest=0.2, cycles=10):
-        self.__led_flash("red", rest, cycles)
+        self.__led_flash(Color.RED, rest, cycles)
     def green_flash(self, rest=0.2, cycles=10):
-        self.__led_flash("green", rest, cycles)
+        self.__led_flash(Color.GREEN, rest, cycles)
     def blue_flash(self, rest=0.2, cycles=10):
-        self.__led_flash("blue", rest, cycles)
+        self.__led_flash(Color.BLUE, rest, cycles)
 
     def red_pulse(self, rest=1):
-        self.__led_pulse("red", rest)
+        self.__led_pulse(Color.RED, rest)
     def green_pulse(self, rest=1):
-        self.__led_pulse("green", rest)
+        self.__led_pulse(Color.GREEN, rest)
     def blue_pulse(self, rest=1):
-        self.__led_pulse("blue", rest)
+        self.__led_pulse(Color.BLUE, rest)
+
+class Color(Enum):
+    RED     = 0
+    GREEN   = 1
+    BLUE    = 2
 
 try:
     if __name__ == "__main__":
