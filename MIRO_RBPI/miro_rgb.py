@@ -9,7 +9,6 @@ class Miro_rgb(Miro_led):
         if len(pins) > 3:
             raise Exception("Too many pins. Add 3 in RGB order.")
         super().__init__(*pins, numbering=numbering, initial=initial)
-        self.setup_all(initial)
 
     def red_off(self):
         self.__led_off(Color.RED)
