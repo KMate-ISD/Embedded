@@ -10,6 +10,7 @@ class Miro_led(Miro_output):
     def __led_toggle(self, led_id):
         self.statuses[led_id] = not self.statuses[led_id]
         GPIO.output(self.pins[0], self.statuses[1])
+        GPIO.output(self.pins[led_id], self.statuses[led_id])
 
     def __led_flash(self, led_id, rest, cycles, off=False):
         for i in range(cycles):
