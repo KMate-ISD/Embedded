@@ -2,8 +2,8 @@
 
 import RPi.GPIO as GPIO
 import sys
-from miro_rfid import Miro_rfid
-from miro_rgb import Miro_rgb
+from src.rbpi_rfid.miro_rfid import Miro_rfid
+from src.rbpi_gpio.miro_rgb import Miro_rgb
 from mfrc522 import MFRC522
 
 try:

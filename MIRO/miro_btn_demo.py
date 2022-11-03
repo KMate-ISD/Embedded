@@ -1,6 +1,6 @@
 import RPi.GPIO as GPIO
-from miro_btn import Miro_btn
-from miro_rgb import Miro_rgb
+from src.rbpi_gpio.miro_btn import Miro_btn
+from src.rbpi_gpio.miro_rgb import Miro_rgb
 
 try:
     if __name__ == "__main__":

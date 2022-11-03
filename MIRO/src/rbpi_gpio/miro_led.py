@@ -1,5 +1,5 @@
 import RPi.GPIO as GPIO
-from miro_gpio import Miro_output
+from src.rbpi_gpio.miro_gpio import Miro_output
 from time import sleep
 
 class Miro_led(Miro_output):

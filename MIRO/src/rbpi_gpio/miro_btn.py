@@ -1,5 +1,5 @@
 import RPi.GPIO as GPIO
-from miro_gpio import Miro_input
+from src.rbpi_gpio.miro_gpio import Miro_input
 
 class Miro_btn(Miro_input):
     def __init__(self, *pins, numbering=GPIO.BOARD, pull_up_down=GPIO.PUD_DOWN, setup=1) -> None:

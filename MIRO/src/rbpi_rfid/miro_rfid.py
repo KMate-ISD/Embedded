@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import RPi.GPIO as GPIO
-from miro_rgb import Miro_rgb
+from src.rbpi_gpio.miro_rgb import Miro_rgb
 from mfrc522 import MFRC522
 
 class Miro_rfid:

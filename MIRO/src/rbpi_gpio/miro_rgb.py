@@ -1,6 +1,6 @@
 from enum import Enum
 import RPi.GPIO as GPIO
-from miro_led import Miro_led
+from src.rbpi_gpio.miro_led import Miro_led
 
 class Color(Enum):
     RED     = 0
