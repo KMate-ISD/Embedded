@@ -3,6 +3,11 @@ import RPi.GPIO as GPIO
 import sys
 from miro_led import Miro_led
 
+class Color(Enum):
+    RED     = 0
+    GREEN   = 1
+    BLUE    = 2
+
 class Miro_rgb(Miro_led):
     def __init__(self, *pins, numbering=GPIO.BOARD, initial=GPIO.LOW) -> None:
         if len(pins) > 3:
@@ -10,37 +15,32 @@ class Miro_rgb(Miro_led):
         super().__init__(*pins, numbering=numbering, initial=initial)
 
     def red_off(self):
-        self.__led_off(Color.RED.value)
+        self.led_off(Color.RED.value)
     def green_off(self):
-        self.__led_off(Color.GREEN.value)
+        self.led_off(Color.GREEN.value)
     def blue_off(self):
-        self.__led_off(Color.BLUE.value)
+        self.led_off(Color.BLUE.value)
 
     def red_on(self):
-        self.__led_on(Color.RED.value)
+        self.led_on(Color.RED.value)
     def green_on(self):
-        self.__led_on(Color.GREEN.value)
+        self.led_on(Color.GREEN.value)
     def blue_on(self):
-        self.__led_on(Color.BLUE.value)
+        self.led_on(Color.BLUE.value)
 
     def red_flash(self, rest=0.2, cycles=10):
-        self.__led_flash(Color.RED.value, rest, cycles)
+        self.led_flash(Color.RED.value, rest, cycles)
     def green_flash(self, rest=0.2, cycles=10):
-        self.__led_flash(Color.GREEN.value, rest, cycles)
+        self.led_flash(Color.GREEN.value, rest, cycles)
     def blue_flash(self, rest=0.2, cycles=10):
-        self.__led_flash(Color.BLUE.value, rest, cycles)
+        self.led_flash(Color.BLUE.value, rest, cycles)
 
     def red_pulse(self, rest=1):
-        self.__led_pulse(Color.RED.value, rest)
+        self.led_pulse(Color.RED.value, rest)
     def green_pulse(self, rest=1):
-        self.__led_pulse(Color.GREEN.value, rest)
+        self.led_pulse(Color.GREEN.value, rest)
     def blue_pulse(self, rest=1):
-        self.__led_pulse(Color.BLUE.value, rest)
-
-class Color(Enum):
-    RED     = 0
-    GREEN   = 1
-    BLUE    = 2
+        self.led_pulse(Color.BLUE.value, rest)
 
 try:
     if __name__ == "__main__":
@@ -73,13 +73,13 @@ try:
 
         led = Miro_rgb(*leds)
 
-        led.RED.value_flash(rest)
-        led.GREEN.value_flash(rest)
-        led.BLUE.value_flash(rest)
+        led.red_flash(rest)
+        led.green_flash(rest)
+        led.blue_flash(rest)
 
-        led.RED.value_pulse()
-        led.GREEN.value_pulse()
-        led.BLUE.value_pulse()
+        led.red_pulse()
+        led.green_pulse()
+        led.blue_pulse()
 
 except Exception as e:
     print(f"{e}")
