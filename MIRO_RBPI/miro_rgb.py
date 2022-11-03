@@ -2,7 +2,6 @@ from enum import Enum
 import RPi.GPIO as GPIO
 import sys
 from miro_led import Miro_led
-from time import sleep
 
 class Miro_rgb(Miro_led):
     def __init__(self, *pins, numbering=GPIO.BOARD, initial=GPIO.LOW) -> None:
@@ -11,32 +10,32 @@ class Miro_rgb(Miro_led):
         super().__init__(*pins, numbering=numbering, initial=initial)
 
     def red_off(self):
-        self.__led_off(Color.RED)
+        self.__led_off(Color.RED.value)
     def green_off(self):
-        self.__led_off(Color.GREEN)
+        self.__led_off(Color.GREEN.value)
     def blue_off(self):
-        self.__led_off(Color.BLUE)
+        self.__led_off(Color.BLUE.value)
 
     def red_on(self):
-        self.__led_on(Color.RED)
+        self.__led_on(Color.RED.value)
     def green_on(self):
-        self.__led_on(Color.GREEN)
+        self.__led_on(Color.GREEN.value)
     def blue_on(self):
-        self.__led_on(Color.BLUE)
+        self.__led_on(Color.BLUE.value)
 
     def red_flash(self, rest=0.2, cycles=10):
-        self.__led_flash(Color.RED, rest, cycles)
+        self.__led_flash(Color.RED.value, rest, cycles)
     def green_flash(self, rest=0.2, cycles=10):
-        self.__led_flash(Color.GREEN, rest, cycles)
+        self.__led_flash(Color.GREEN.value, rest, cycles)
     def blue_flash(self, rest=0.2, cycles=10):
-        self.__led_flash(Color.BLUE, rest, cycles)
+        self.__led_flash(Color.BLUE.value, rest, cycles)
 
     def red_pulse(self, rest=1):
-        self.__led_pulse(Color.RED, rest)
+        self.__led_pulse(Color.RED.value, rest)
     def green_pulse(self, rest=1):
-        self.__led_pulse(Color.GREEN, rest)
+        self.__led_pulse(Color.GREEN.value, rest)
     def blue_pulse(self, rest=1):
-        self.__led_pulse(Color.BLUE, rest)
+        self.__led_pulse(Color.BLUE.value, rest)
 
 class Color(Enum):
     RED     = 0
@@ -74,13 +73,13 @@ try:
 
         led = Miro_rgb(*leds)
 
-        led.red_flash(rest)
-        led.green_flash(rest)
-        led.blue_flash(rest)
+        led.RED.value_flash(rest)
+        led.GREEN.value_flash(rest)
+        led.BLUE.value_flash(rest)
 
-        led.red_pulse()
-        led.green_pulse()
-        led.blue_pulse()
+        led.RED.value_pulse()
+        led.GREEN.value_pulse()
+        led.BLUE.value_pulse()
 
 except Exception as e:
     print(f"{e}")
