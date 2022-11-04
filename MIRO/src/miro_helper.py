@@ -24,6 +24,6 @@ class Miro_helper():
         with open("/etc/wpa_supplicant/wpa_supplicant.conf", 'r') as file:
             lines = file.readlines()
             ssid = [line for line in lines if line.startswith("ssid")][0].split('=')[1]
-            psk = [line for line in lines if line.startswith("ssid")][0].split('=')[1]
+            psk = [line for line in lines if line.startswith("psk")][0].split('=')[1]
         
         return(ssid, psk)
