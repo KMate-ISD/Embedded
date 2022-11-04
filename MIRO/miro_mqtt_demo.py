@@ -5,12 +5,12 @@ try:
     mc.add_client(kmate_mqtt="lorimmer_mqtt")
     mc.register_on_connect(mc.on_connect)
     mc.register_on_message(mc.on_message)
+    mc.register_on_disconnect(mc.on_disconnect)
     mc.connect()
     for topic in mc.topics:
         mc.subscribe(topic)
     mc.start()
     input("Press ENTER to finish...")
-    mc.register_on_disconnect(mc.on_disconnect)
 
 except Exception as e:
     print(f"{e}")
