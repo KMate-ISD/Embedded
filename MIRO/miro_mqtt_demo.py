@@ -2,13 +2,7 @@ from src.rbpi_mqtt.miro_mqtt_action_handler import Miro_mqtt_action_handler
 
 try:
     mx = Miro_mqtt_action_handler("192.168.1.85", 1883, "admin/debug", "auth/user")
-    creds = mx.generate_credentials(12)
-    mx.save_credentials(creds)
-    print(creds)
-    print(type(creds))
-    print(dict({creds}))
-    print(type(dict({creds})))
-    mx.add_client(**dict({creds}))
+    mx.add_client(MG0O="_>0KgxBdr~ZZ")
     mx.register_on_connect(mx.on_connect)
     mx.register_on_message(mx.on_message)
     mx.register_on_disconnect(mx.on_disconnect)
@@ -20,6 +14,7 @@ try:
     
     my = Miro_mqtt_action_handler("192.168.1.85", 1883, "admin/debug", "auth/user")
     creds = my.generate_credentials(12)
+    my.save_credentials(creds)
     print(creds)
     my.add_client(**dict({creds}))
     my.register_on_connect(my.on_connect)
