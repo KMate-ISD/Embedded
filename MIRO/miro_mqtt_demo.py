@@ -10,7 +10,7 @@ try:
     for topic in mx.topics:
         mx.subscribe(topic)
     mx.start()
-    input("Press ENTER to add next w/o client authentication...")
+    input("Press ENTER to generate new client...")
     
     my = Miro_mqtt_action_handler("192.168.1.85", 1883, "admin/debug", "auth/user")
     creds = my.generate_credentials(12)
