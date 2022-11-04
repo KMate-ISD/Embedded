@@ -14,12 +14,12 @@ try:
 
     mc = Miro_mqtt_action_handler("192.168.1.85", 1883, "admin/debug", "auth/user")
     mc.add_client(kmate_mqtt="lorimmer_mqtt")
-    mc.clients["kmate_mqtt"].on_connect = mc.on_connect
-    mc.clients["kmate_mqtt"].on_message = mc.on_message
-    mc.connect("kmate_mqtt")
+    mc.register_on_connect(mc.on_connect)
+    mc.register_on_message(mc.on_message)
+    mc.connect()
     for topic in mc.topics:
-        mc.clients["kmate_mqtt"].subscribe(topic)
-    mc.clients["kmate_mqtt"].loop_start()
+        mc.subscribe(topic)
+    mc.start()
     input("Press ENTER to next...")
 
 except Exception as e:
