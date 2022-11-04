@@ -23,7 +23,7 @@ class Miro_helper():
     def get_wifi_credentials():
         with open("/etc/wpa_supplicant/wpa_supplicant.conf", 'r') as file:
             lines = file.readlines()
-            ssid = [line for line in lines if "ssid=" in line][0].split('=')[1].strip('\n').strip('"').strip("'")
-            psk = [line for line in lines if "psk=" in line][0].split('=')[1].strip('\n').strip('"').strip("'")
+            ssid = [line for line in lines if "ssid=" in line][0].split('=')[1].strip()[1, -1]
+            psk = [line for line in lines if "psk=" in line][0].split('=')[1].strip()[1, -1]
         
         return(ssid, psk)
