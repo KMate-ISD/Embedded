@@ -1,3 +1,4 @@
+import os
 import random
 import subprocess
 from src.rbpi_mqtt.miro_mqtt_client_handler import Miro_mqtt_client_handler
@@ -40,4 +41,4 @@ class Miro_mqtt_action_handler(Miro_mqtt_client_handler):
     def save_credentials(self, *credentials):
         for cred in credentials:
             subprocess.run(["mosquitto_passwd", "-b", Miro_helper.passwordfile, cred[0], cred[1]])
-        subprocess.run(["sudo", "kill", "-SIGHUP", f"$(cat {Miro_helper.pid_file})"])
+        os.system(f"sudo kill -SIGHUP $(cat {Miro_helper.pid_file})")
