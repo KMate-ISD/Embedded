@@ -16,7 +16,7 @@ try:
     creds = mx.generate_credentials(12)
     mx.save_credentials(creds)
     print(creds)
-    mx.add_client(dict({creds}))
+    mx.add_client(**dict({creds}))
     mx.register_on_connect(mx.on_connect)
     mx.register_on_message(mx.on_message)
     mx.register_on_disconnect(mx.on_disconnect)
@@ -25,11 +25,11 @@ try:
         mx.subscribe(topic)
     mx.start()
     input("Press ENTER to add next w/o client authentication...")
-
+    
     my = Miro_mqtt_action_handler("192.168.1.85", 1883, "admin/debug", "auth/user")
     creds = my.generate_credentials(12)
     print(creds)
-    my.add_client(dict({creds}))
+    my.add_client(**dict({creds}))
     my.register_on_connect(my.on_connect)
     my.register_on_message(my.on_message)
     my.register_on_disconnect(my.on_disconnect)
