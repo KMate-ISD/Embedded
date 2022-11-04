@@ -11,6 +11,7 @@ class Miro_helper():
         pl = [f"{msg.payload[i]:#04x}\n" if i%4==3 else f"{msg.payload[i]:#04x} " for i in range(len(msg.payload))]
         print(''.join(pl))
     
+    @classmethod
     def get_mqtt_users(cls):
         users = dict()
         with open(cls.passwordfile, 'r') as file:
@@ -22,7 +23,8 @@ class Miro_helper():
                 users.update({user : pw})
 
         return(users)
-    
+
+    @classmethod
     def get_wifi_credentials(cls):
         with open(cls.wifi_details, 'r') as file:
             lines = file.readlines()
