@@ -1,4 +1,7 @@
 class Miro_helper():
+    passwordfile = "/etc/mosquitto/pwfile"
+    wifi_details = "/etc/wpa_supplicant/wpa_supplicant.conf"
+
     @staticmethod
     def display_message(msg):
         print(f"{msg.topic} | {msg.payload}")
@@ -8,9 +11,9 @@ class Miro_helper():
         pl = [f"{msg.payload[i]:#04x}\n" if i%4==3 else f"{msg.payload[i]:#04x} " for i in range(len(msg.payload))]
         print(''.join(pl))
     
-    def get_mqtt_users():
+    def get_mqtt_users(cls):
         users = dict()
-        with open("/etc/mosquitto/pwfile", 'r') as file:
+        with open(cls.passwordfile, 'r') as file:
             lines = file.readlines()
             iterator = iter(lines)
 
@@ -20,8 +23,8 @@ class Miro_helper():
 
         return(users)
     
-    def get_wifi_credentials():
-        with open("/etc/wpa_supplicant/wpa_supplicant.conf", 'r') as file:
+    def get_wifi_credentials(cls):
+        with open(cls.wifi_details, 'r') as file:
             lines = file.readlines()
             ssid = [line for line in lines if "ssid=" in line][0].split('=')[1].strip()[1:-1]
             psk = [line for line in lines if "psk=" in line][0].split('=')[1].strip()[1:-1]
