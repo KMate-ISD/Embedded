@@ -19,7 +19,7 @@ class Miro_mqtt_client_handler():
         else:
             print("Connected.")
 
-    def on_disconnect(client, userdata, rc=0):
+    def on_disconnect(client, userdata, rc):
         print(f"Client disconnected: {client}")
 
     def on_message(self, client, userdata, msg):
