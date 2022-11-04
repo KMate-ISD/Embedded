@@ -2,7 +2,7 @@ from src.rbpi_mqtt.miro_mqtt_action_handler import Miro_mqtt_action_handler
 
 try:
     mx = Miro_mqtt_action_handler("192.168.1.85", 1883, "admin/debug", "auth/user")
-    mx.add_client(MG0O="_>0KgxBdr~ZZ")
+    mx.add_client(kmate_mqtt="lorimmer_mqtt")
     mx.register_on_connect(mx.on_connect)
     mx.register_on_message(mx.on_message)
     mx.register_on_disconnect(mx.on_disconnect)
@@ -13,7 +13,7 @@ try:
     input("Press ENTER to generate new client...")
     
     my = Miro_mqtt_action_handler("192.168.1.85", 1883, "admin/debug", "auth/user")
-    creds = my.generate_credentials(12)
+    creds = my.generate_credentials(8)
     my.save_credentials(creds)
     print(creds)
     my.add_client(**dict({creds}))
