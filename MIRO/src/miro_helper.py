@@ -1,5 +1,6 @@
 class Miro_helper():
     passwordfile = "/etc/mosquitto/pwfile"
+    pid_file = "/run/mosquitto/mosquitto.pid"
     wifi_details = "/etc/wpa_supplicant/wpa_supplicant.conf"
 
     @staticmethod
