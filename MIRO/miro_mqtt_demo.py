@@ -6,8 +6,8 @@ try:
     mx.save_credentials(creds)
     print(creds)
     print(type(creds))
-    print(**dict({creds}))
-    print(type(**dict({creds})))
+    print(dict({creds}))
+    print(type(dict({creds})))
     mx.add_client(**dict({creds}))
     mx.register_on_connect(mx.on_connect)
     mx.register_on_message(mx.on_message)
@@ -34,8 +34,6 @@ try:
 except Exception as e:
     print(f"{e}")
 finally:
-    mc.stop()
-    mc.disconnect()
     mx.stop()
     mx.disconnect()
     my.stop()
