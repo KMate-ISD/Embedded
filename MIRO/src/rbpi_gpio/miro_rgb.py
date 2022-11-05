@@ -40,3 +40,7 @@ class Miro_rgb(Miro_led):
         self.led_pulse(Color.GREEN.value, rest)
     def blue_pulse(self, rest=1):
         self.led_pulse(Color.BLUE.value, rest)
+    
+    def all_off(self):
+        for pin in self.pins:
+            return super().led_off(pin)
