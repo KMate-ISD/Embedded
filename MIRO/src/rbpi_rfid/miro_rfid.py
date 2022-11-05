@@ -106,9 +106,9 @@ class Miro_rfid:
             self.led.green_pulse(0.25)
         except Exception:
             self.led.red_pulse(0.25)
+            raise
         finally:
             self.led.blue_off()
-            raise
 
     def write(self, text, block_initial):
         try:
@@ -122,6 +122,6 @@ class Miro_rfid:
             self.led.green_flash(0.05, block_count)
         except Exception:
             self.led.red_flash(0.05, 10)
+            raise
         finally:
             self.led.blue_off()
-            raise
