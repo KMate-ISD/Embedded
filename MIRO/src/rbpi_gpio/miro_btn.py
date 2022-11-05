@@ -14,6 +14,15 @@ class Miro_btn(Miro_input):
             self.events.append(event)
             GPIO.add_event_detect(pin, event, callback=callback)
     
+    def remove_handler(self, pin, callback):
+        GPIO.remove_event_detect(pin)
+        idx = self.callbacks.index(callback)
+        ret_cb = self.callbacks.pop(idx)
+        ret_ev = self.events.pop(idx)
+        for i in range(len(self.callbacks)):
+            GPIO.add_event_detect(pin, self.events[i], callback=self.callbacks[i])
+        return(ret_cb, ret_ev)
+    
     def remove_handlers(self, pin):
         self.callbacks.clear()
         GPIO.remove_event_detect(pin)
