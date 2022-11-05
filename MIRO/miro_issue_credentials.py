@@ -86,12 +86,12 @@ def start_listener():
     mqtt.connect()
     mqtt.start()
 
-def notify_OK(msg):
-    rgb.green_pulse(1)
+def notify_OK(msg, pulse=1):
+    rgb.green_pulse(pulse)
     print(msg)
 
-def notify_NOK(msg):
-    rgb.red_pulse(1)
+def notify_NOK(msg, pulse=1):
+    rgb.red_pulse(pulse)
     print(msg)
 
 def write_creds_to_tag(ctx):
@@ -125,7 +125,7 @@ def write_creds_to_tag(ctx):
         notify_NOK("Error while writing! Please try again.")
         return(ret)
     
-    notify_OK("Userpass saved to rfid tag.")
+    notify_OK("Userpass saved to rfid tag.", 0.15)
 
     # write wifi ssid/psk to rfid tag (separated by 0xFF)
     try:
@@ -135,7 +135,7 @@ def write_creds_to_tag(ctx):
         notify_NOK("Error while writing! Please try again.")
         return(ret)
     
-    notify_OK("Ssid + psk saved to rfid tag.")
+    notify_OK("Ssid + psk saved to rfid tag.", 0.15)
 
     # the node should confirm delivery in {AUTH_TIME} seconds
     t0 = t = time.time()
