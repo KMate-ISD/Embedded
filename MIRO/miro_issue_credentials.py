@@ -86,6 +86,14 @@ def start_listener():
     mqtt.connect()
     mqtt.start()
 
+def notify_OK(msg):
+    rgb.green_pulse(1)
+    print(msg)
+
+def notify_NOK(msg):
+    rgb.red_pulse(1)
+    print(msg)
+
 def write_creds_to_tag(ctx):
     ret = NOK
 
@@ -114,9 +122,7 @@ def write_creds_to_tag(ctx):
         rfid.write(''.join(creds), DATA_BEGIN)
     except Exception as e:
         is_busy = False
-        rgb.led_off()
-        rgb.red_pulse(1)
-        print("Error while writing! Please try again.")
+        notify_NOK("Error while writing! Please try again.")
         return(ret)
     
     # write wifi ssid/psk to rfid tag (separated by 0xFF)
@@ -124,9 +130,7 @@ def write_creds_to_tag(ctx):
         rfid.write(f'{0xFF}'.join(Miro_helper.get_wifi_credentials()), DATA_BEGIN + 4)
     except Exception as e:
         is_busy = False
-        rgb.led_off()
-        rgb.red_pulse(1)
-        print("Error while writing! Please try again.")
+        notify_NOK("Error while writing! Please try again.")
         return(ret)
 
     # the node should confirm delivery in {AUTH_TIME} seconds
@@ -141,14 +145,12 @@ def write_creds_to_tag(ctx):
     # no feedback received, terminating access
     if d > AUTH_TIME:
         mqtt.revoke_access(creds[0])
-        rgb.red_pulse(1)
-        ret_msg = f"No confirmation received. Access revoked from {creds[0]}"
+        notify_NOK(f"No confirmation received. Access revoked from {creds[0]}")
 
     # confirmation of delivery received through the authentication channel
     else:
         ret = OK
-        rgb.green_pulse(1)
-        ret_msg = f"Delivery confirmed. Access granted to {creds[0]}."
+        notify_OK(f"Delivery confirmed. Access granted to {creds[0]}.")
 
     # clean up
     mqtt.topics.remove(auth)
@@ -156,8 +158,7 @@ def write_creds_to_tag(ctx):
 
     # release lock
     is_busy = False
-
-    print(ret_msg)
+    
     return(ret)
 
 try:
