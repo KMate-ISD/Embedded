@@ -127,7 +127,7 @@ def write_creds_to_tag(ctx):
     
     # write wifi ssid/psk to rfid tag (separated by 0xFF)
     try:
-        rfid.write(f'{0xFF}'.join(Miro_helper.get_wifi_credentials()), DATA_BEGIN + 4)
+        rfid.write(chr(0xFF).join(Miro_helper.get_wifi_credentials()), DATA_BEGIN + 4)
     except Exception as e:
         is_busy = False
         notify_NOK("Error while writing! Please try again.")
@@ -158,7 +158,7 @@ def write_creds_to_tag(ctx):
 
     # release lock
     is_busy = False
-    
+
     return(ret)
 
 try:
