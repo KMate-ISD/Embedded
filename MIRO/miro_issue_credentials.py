@@ -87,6 +87,7 @@ def start_listener():
 
 def write_creds_to_tag(ctx):
     ret = NOK
+
     print("Issuing credentials...")
 
     global is_busy
@@ -105,10 +106,16 @@ def write_creds_to_tag(ctx):
     auth = f"auth/{creds[0]}"
     mqtt.add_topic(auth)
     mqtt.subscribe(auth)
-    print(f"Created topic for confirmation of delivery: {auth}")
+    print(f"New user created: {creds[0]}")
 
     # write credentials to rfid tag
-    rfid.write(''.join(creds), DATA_BEGIN)
+    try:
+        rfid.write(''.join(creds), DATA_BEGIN)
+    except Exception as e:
+        is_busy = False
+        rgb.red_pulse(1)
+        print("Error while writing! Please try again.")
+        return(ret)
 
     # the node should confirm delivery in {AUTH_TIME} seconds
     t0 = t = time.time()
