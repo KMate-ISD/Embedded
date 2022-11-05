@@ -3,6 +3,7 @@ import sys
 import time
 from functools import reduce
 from mfrc522 import MFRC522
+from src.miro_helper import Miro_helper
 from pprint import pprint
 from src.rbpi_gpio.miro_btn import Miro_btn
 from src.rbpi_mqtt.miro_mqtt_action_handler import Miro_mqtt_action_handler
@@ -113,6 +114,17 @@ def write_creds_to_tag(ctx):
         rfid.write(''.join(creds), DATA_BEGIN)
     except Exception as e:
         is_busy = False
+        rgb.led_off()
+        rgb.red_pulse(1)
+        print("Error while writing! Please try again.")
+        return(ret)
+    
+    # write wifi ssid/psk to rfid tag (separated by 0xFF)
+    try:
+        rfid.write(f'{0xFF}'.join(Miro_helper.get_wifi_credentials()), DATA_BEGIN + 4)
+    except Exception as e:
+        is_busy = False
+        rgb.led_off()
         rgb.red_pulse(1)
         print("Error while writing! Please try again.")
         return(ret)
