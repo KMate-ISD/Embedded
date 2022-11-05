@@ -125,6 +125,8 @@ def write_creds_to_tag(ctx):
         notify_NOK("Error while writing! Please try again.")
         return(ret)
     
+    notify_OK("Userpass saved to rfid tag.")
+
     # write wifi ssid/psk to rfid tag (separated by 0xFF)
     try:
         rfid.write(chr(0xFF).join(Miro_helper.get_wifi_credentials()), DATA_BEGIN + 4)
@@ -132,6 +134,8 @@ def write_creds_to_tag(ctx):
         is_busy = False
         notify_NOK("Error while writing! Please try again.")
         return(ret)
+    
+    notify_OK("Ssid + psk saved to rfid tag.")
 
     # the node should confirm delivery in {AUTH_TIME} seconds
     t0 = t = time.time()
@@ -150,7 +154,7 @@ def write_creds_to_tag(ctx):
     # confirmation of delivery received through the authentication channel
     else:
         ret = OK
-        notify_OK(f"Delivery confirmed. Access granted to {creds[0]}.")
+        notify_OK(f"Credentials successfully transferred.")
 
     # clean up
     mqtt.topics.remove(auth)
