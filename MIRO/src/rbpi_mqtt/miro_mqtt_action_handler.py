@@ -38,6 +38,11 @@ class Miro_mqtt_action_handler(Miro_mqtt_client_handler):
 
         return(''.join(user))
 
+    def revoke_access(self, *users):
+        for user in users:
+            subprocess.run(["mosquitto_passwd", "-D", Miro_helper.passwordfile, user])
+        os.system(f"sudo kill -SIGHUP $(cat {Miro_helper.pid_file})")
+
     def save_credentials(self, *credentials):
         for cred in credentials:
             subprocess.run(["mosquitto_passwd", "-b", Miro_helper.passwordfile, cred[0], cred[1]])
