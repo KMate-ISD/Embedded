@@ -8,6 +8,7 @@ class Miro_mqtt_action_handler(Miro_mqtt_client_handler):
     def __init__(self, broker_ip, port, *topics) -> None:
         super().__init__(broker_ip, port, *topics)
         self.last_msgs = dict()
+        os.system(f"sudo chown kmate /run/mosquitto")
     
     def on_message(self, client, userdata, msg):
         super().on_message(client, userdata, msg)
@@ -41,9 +42,9 @@ class Miro_mqtt_action_handler(Miro_mqtt_client_handler):
     def revoke_access(self, *users):
         for user in users:
             subprocess.run(["mosquitto_passwd", "-D", Miro_helper.passwordfile, user])
-        os.system(f"sudo kill -SIGHUP $(cat {Miro_helper.pid_file})")
+        os.system(f"sudo kill -SIGHUP $(cat {Miro_helper.pid_path}{Miro_helper.pid_file})")
 
     def save_credentials(self, *credentials):
         for cred in credentials:
             subprocess.run(["mosquitto_passwd", "-b", Miro_helper.passwordfile, cred[0], cred[1]])
-        os.system(f"sudo kill -SIGHUP $(cat {Miro_helper.pid_file})")
+        os.system(f"sudo kill -SIGHUP $(cat {Miro_helper.pid_path}{Miro_helper.pid_file})")
