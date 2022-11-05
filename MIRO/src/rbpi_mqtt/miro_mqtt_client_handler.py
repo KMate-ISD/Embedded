@@ -61,6 +61,10 @@ class Miro_mqtt_client_handler():
     def subscribe(self, topic, username=0):
         username = self.__get_default_user_if_parameter_is_null__(username)
         self.clients[username].subscribe(topic)
+
+    def unsubscribe(self, topic, username=0):
+        username = self.__get_default_user_if_parameter_is_null__(username)
+        self.clients[username].unsubscribe(topic)
     
     def register_on_connect(self, callback, username=0):
         username = self.__get_default_user_if_parameter_is_null__(username)

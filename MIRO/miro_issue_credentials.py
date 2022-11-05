@@ -85,9 +85,11 @@ def start_listener():
     mqtt.connect()
     mqtt.start()
 
-def write_creds_to_tag():
+def write_creds_to_tag(ctx):
     ret = NOK
+    print("Issuing credentials...")
 
+    global is_busy
     # check if writing is already happening
     if is_busy:
         return(ret)
@@ -103,9 +105,10 @@ def write_creds_to_tag():
     auth = f"auth/{creds[0]}"
     mqtt.add_topic(auth)
     mqtt.subscribe(auth)
+    print(f"Created topic for confirmation of delivery: {auth}")
 
     # write credentials to rfid tag
-    rfid.write(''.join(creds))
+    rfid.write(''.join(creds), DATA_BEGIN)
 
     # the node should confirm delivery in {AUTH_TIME} seconds
     t0 = t = time.time()
@@ -119,16 +122,23 @@ def write_creds_to_tag():
     # no feedback received, terminating access
     if d > AUTH_TIME:
         mqtt.revoke_access(creds[0])
-        mqtt.topics.pop(auth)
         rgb.red_pulse(1)
+        ret_msg = f"No confirmation received. Access revoked from {creds[0]}"
 
     # confirmation of delivery received through the authentication channel
     else:
         ret = OK
         rgb.green_pulse(1)
-    
+        ret_msg = f"Delivery confirmed. Access granted to {creds[0]}."
+
+    # clean up
+    mqtt.topics.remove(auth)
+    mqtt.unsubscribe(auth)
+
     # release lock
     is_busy = False
+
+    print(ret_msg)
     return(ret)
 
 try:
