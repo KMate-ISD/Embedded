@@ -101,14 +101,14 @@ class Miro_rfid:
             self.led.blue_on()
             blocks = [int(c) for c in blocks]
             id, data = self.__read_block_loop(blocks)
-            print(id)
+            print(f"({id})")
             self.print_data_readable(data, blocks[0])
             self.led.green_pulse(0.25)
         except Exception:
             self.led.red_pulse(0.25)
             raise
         finally:
-            self.led.blue_off()
+            self.led.all_off()
 
     def write(self, text, block_initial):
         try:
@@ -117,11 +117,11 @@ class Miro_rfid:
             block_count = len(data)
             blocks = range(block_initial, block_count + block_initial)
             id, data = self.__write_block_loop(data, blocks)
-            print(id)
+            print(f"({id})")
             self.print_data_readable(data, block_initial)
             self.led.green_flash(0.05, block_count)
         except Exception:
             self.led.red_flash(0.05, 10)
             raise
         finally:
-            self.led.blue_off()
+            self.led.all_off()
