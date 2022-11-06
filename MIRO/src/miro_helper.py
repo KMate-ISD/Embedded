@@ -1,6 +1,6 @@
 from pprint import pprint
 
-DEBUG = 0
+DEBUG = 1
 
 class Miro_helper():
     passwordfile = "/etc/mosquitto/pwfile"
@@ -15,12 +15,12 @@ class Miro_helper():
 
     @staticmethod
     def display_message(msg):
-        print(f"{msg.topic} | {msg.payload}")
+        return(f"{msg.topic} | {msg.payload}")
 
     @staticmethod
     def display_message_hex(msg):
         pl = [f"{msg.payload[i]:#04x}\n" if i%4==3 else f"{msg.payload[i]:#04x} " for i in range(len(msg.payload))]
-        print(''.join(pl))
+        return(''.join(pl))
     
     @classmethod
     def get_mqtt_users(cls):

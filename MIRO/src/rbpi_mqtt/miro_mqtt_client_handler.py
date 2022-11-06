@@ -24,7 +24,7 @@ class Miro_mqtt_client_handler():
 
     def on_message(self, client, userdata, msg):
         Miro_helper.display_message(msg)
-        Miro_helper.display_message_hex(msg)
+        Miro_helper.debug(Miro_helper.display_message_hex(msg))
 
     def add_client(self, **credentials):
         self.clients.update({key : mqtt.Client() for key in credentials})
