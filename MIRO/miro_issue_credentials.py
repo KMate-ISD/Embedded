@@ -10,6 +10,7 @@ from src.rbpi_mqtt.miro_mqtt_action_handler import Miro_mqtt_action_handler
 from src.rbpi_rfid.miro_rfid import Miro_rfid
 from src.rbpi_gpio.miro_rgb import Miro_rgb
 
+
 BTN_PIN     = 36
 
 DATA_BEGIN  = 4
@@ -22,15 +23,21 @@ REST        = 0.2
 BROKER      = "192.168.1.85"
 PORT        = 1883
 
-AUTH_TIME   = 30
-SUPER_U     = "admin"
-SUPER_P     = "1234"
+AUTH_TIME   = 20
+SUPER_U     = "user"
+SUPER_P     = "pass"
 
 OK          = 0
 NOK         = 1
 
+DEBUG       = 1
+
 
 global btn, rgb, rc, rfid, mqtt, is_busy
+
+def debug(msg):
+    if DEBUG:
+        pprint(msg)
 
 def initialize_context(btn=BTN_PIN, rgb=(LED_R, LED_G, LED_B), broker=BROKER, port=PORT):
     btn = Miro_btn(btn)
@@ -40,6 +47,14 @@ def initialize_context(btn=BTN_PIN, rgb=(LED_R, LED_G, LED_B), broker=BROKER, po
     mqtt = Miro_mqtt_action_handler(broker, port)
 
     return(btn, rgb, rc, rfid, mqtt)
+
+def notify_OK(msg, pulse=1):
+    rgb.green_pulse(pulse)
+    print(msg)
+
+def notify_NOK(msg, pulse=1):
+    rgb.red_pulse(pulse)
+    print(msg)
 
 def setup(args):
     if len(args) == 13:
@@ -68,7 +83,7 @@ def setup(args):
                     cla[flag] = int(cla[flag])
                 elif flag == "-r":
                     cla[flag] = float(cla[flag])
-        pprint(cla)
+        debug(cla)
 
         is_parameterized = reduce(lambda a, b: a and b, [key in cla.keys() for key in params])
 
@@ -86,14 +101,6 @@ def start_listener():
     mqtt.connect()
     mqtt.start()
 
-def notify_OK(msg, pulse=1):
-    rgb.green_pulse(pulse)
-    print(msg)
-
-def notify_NOK(msg, pulse=1):
-    rgb.red_pulse(pulse)
-    print(msg)
-
 def write_creds_to_tag(ctx):
     ret = NOK
 
@@ -108,7 +115,7 @@ def write_creds_to_tag(ctx):
     is_busy = True
 
     # generate username and password for a node
-    creds = mqtt.generate_credentials(12)
+    creds = mqtt.generate_credentials(4)
     mqtt.save_credentials(creds)
 
     # add channel for authentication
@@ -117,44 +124,48 @@ def write_creds_to_tag(ctx):
     mqtt.subscribe(auth)
     print(f"New user created: {creds[0]}")
 
-    # write credentials to rfid tag
+    # Preparing data to write to rfid tag
+    userpass = ''.join(creds)
+    ssid, psk = Miro_helper.get_wifi_credentials()
+    start = f"{chr(0xE0)}{chr(len(ssid))}"
+    next = f"{chr(0xED)}{chr(len(psk))}"
+    stop = f"{chr(0xEA)}{chr(len(ssid) + (len(psk)))}"
+    data = f"{userpass}{start}{ssid}{next}{psk}{stop}"
+    debug(data)
+
+    # save prepared data to rfid tag
     try:
-        rfid.write(''.join(creds), DATA_BEGIN)
+        rfid.write(data, DATA_BEGIN)
+    
+    # release lock on exception
     except Exception as e:
         is_busy = False
         notify_NOK("Error while writing! Please try again.")
         return(ret)
     
-    notify_OK("Userpass saved to rfid tag.", 0.15)
+    notify_OK("Credentials saved to rfid tag.", 0.15)
 
-    # write wifi ssid/psk to rfid tag (separated by 0xFF)
-    try:
-        rfid.write(chr(0xFF).join(Miro_helper.get_wifi_credentials()), DATA_BEGIN + 4)
-    except Exception as e:
-        is_busy = False
-        notify_NOK("Error while writing! Please try again.")
-        return(ret)
-    
-    notify_OK("Ssid + psk saved to rfid tag.", 0.15)
+    # the node should confirm tag delivery in {AUTH_TIME} seconds
+    msg = f"Bring your tag near the MIRO node. Time available: "
 
-    # the node should confirm delivery in {AUTH_TIME} seconds
     t0 = t = time.time()
     while t - t0 < AUTH_TIME and auth not in mqtt.last_msgs:
         t = time.time()
         d = t - t0
         if not round(d, 1)%1:
             rgb.blue_pulse(0.1)
+            print("\r%s%s"%(msg, f"{AUTH_TIME - round(d)}".ljust(2)), end='')
         time.sleep(0.1)
     
     # no feedback received, terminating access
     if d > AUTH_TIME:
         mqtt.revoke_access(creds[0])
-        notify_NOK(f"No confirmation received. Access revoked from {creds[0]}")
+        notify_NOK(f"\nNo confirmation received. Access revoked from {creds[0]}")
 
     # confirmation of delivery received through the authentication channel
     else:
         ret = OK
-        notify_OK(f"Credentials successfully transferred.")
+        notify_OK(f"\nCredentials successfully transferred.")
 
     # clean up
     mqtt.topics.remove(auth)
@@ -176,7 +187,7 @@ try:
         btn.add_handler(next(iter(btn.pins)), GPIO.RISING, write_creds_to_tag)
 
         exit = input('Type "EXIT" to exit.\n')
-        while (exit != "EXIT"):
+        while (exit != "EXIT" and exit != "qq"):
             exit = input()
 
 except Exception as e:
