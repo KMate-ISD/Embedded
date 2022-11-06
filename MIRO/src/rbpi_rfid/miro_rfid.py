@@ -88,7 +88,7 @@ class Miro_rfid:
     def __read_block_loop(self, blocks):
         id, data = self.__read_block(blocks)
 
-        t0, t = time.time()
+        t0 = t = time.time()
         while t - t0 < 10 and not id:
             id, data = self.__read_block(blocks)
             t = time.time()
@@ -100,7 +100,7 @@ class Miro_rfid:
     def __write_block_loop(self, data, blocks):
         id, text_in = self.__write_block(data, blocks)
 
-        t0, t = time.time()
+        t0 = t = time.time()
         while t - t0 < 10 and not id:
             id, text_in = self.__write_block(data, blocks)
             t = time.time()
