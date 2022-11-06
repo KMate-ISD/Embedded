@@ -42,6 +42,14 @@ class Miro_rfid:
         for i in range(len(data)):
             data_hex = ["%0.2x"%d for d in data[i]]
             print(f"BLOCK {i + block_initial:>3}\t{data_hex}")
+    
+    @staticmethod
+    def parse_lock_bytes(buf, arr):
+        for i in range (4,8):
+            buf.append(arr[0] >> i & 1)
+        for i in range (0,8):
+            buf.append(arr[1] >> i & 1)
+        return(buf)
 
     def __read_block(self, blocks):
         (status, TagType) = self.reader.MFRC522_Request(self.reader.PICC_REQIDL)
@@ -71,15 +79,17 @@ class Miro_rfid:
             return(None, None)
         id = self.__uid_to_num(uid)
         self.reader.MFRC522_SelectTag(uid)
+        lock_bytes = self.reader.MFRC522_Read(3)[2:]
+        lock_bits = self.parse_lock_bytes([], lock_bytes)
         for i in range(len(blocks)):
             self.reader.MFRC522_Read(blocks[i])
-            if status == self.reader.MI_OK:
+            if status == self.reader.MI_OK and not lock_bits[blocks[i] - 4]:
                 self.reader.MFRC522_Write(blocks[i], data[i])
             else:
                 error_list.append(blocks[i])
         self.reader.MFRC522_StopCrypto1()
         if error_list:
-            raise Exception(f"Write operation complete with errors. Block(s) {error_list} unreadable.")
+            raise Exception(f"Write operation complete with errors. Erroneous or locked block(s): {error_list}.")
         compare_i = [data[i][0:4] for i in range(len(blocks))]
         compare_o = [self.reader.MFRC522_Read(n)[0:4] for n in blocks]
         assert compare_i == compare_o, f"Write operation complete with errors. Part of the data couldn't be written. Check tag data blocks for reference: {compare_o}."
@@ -141,6 +151,6 @@ class Miro_rfid:
             raise
         except Exception as e:
             self.led.red_flash(0.05, 10)
-            raise Exception(f"Error during write loop: {e}")
+            raise Exception(f"Error during write loop. Please try a new card.")
         finally:
             self.led.all_off()
