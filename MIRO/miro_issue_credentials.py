@@ -173,6 +173,7 @@ def write_creds_to_tag(ctx):
         mqtt.topics.remove(auth)
         mqtt.unsubscribe(auth)
         is_busy = False
+        print()
         return(ret)
 
 try:
