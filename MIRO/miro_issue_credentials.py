@@ -164,9 +164,9 @@ def write_creds_to_tag(ctx):
             notify_OK(f"Credentials successfully transferred.")
 
     except Exception as e:
-        e.args = (*e.args, "\nUser not saved.")
+        msg = "User not saved."
         mqtt.revoke_access(creds[0])
-        notify_NOK(e) if type(e) is not TimeoutError else print(e)
+        notify_NOK(f"{e}\n{msg}") if type(e) is not TimeoutError else print(f"{e}\n{msg}")
 
     finally:
         # clean up
