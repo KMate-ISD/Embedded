@@ -82,6 +82,8 @@ class Miro_rfid:
         lock_bytes = self.reader.MFRC522_Read(3)[2:]
         lock_bits = self.parse_lock_bytes([], lock_bytes)
         for i in range(len(blocks)):
+            print(f"[blocks[i] - 4] => {blocks[i] - 4}")
+            print(f"lock_bits[blocks[i] - 4] => {lock_bits[blocks[i] - 4]}")
             if status == self.reader.MI_OK and not lock_bits[blocks[i] - 4]:
                 self.reader.MFRC522_Write(blocks[i], data[i])
             else:
