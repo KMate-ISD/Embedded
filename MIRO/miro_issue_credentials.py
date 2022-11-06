@@ -123,7 +123,7 @@ def write_creds_to_tag(ctx):
         auth = f"auth/{creds[0]}"
         mqtt.add_topic(auth)
         mqtt.subscribe(auth)
-        print(f"User: {creds[0]}")
+        print(f"User created: {creds[0]}.")
 
         # Preparing data to write to rfid tag
         userpass = ''.join(creds)
