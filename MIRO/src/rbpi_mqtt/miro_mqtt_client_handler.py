@@ -15,9 +15,9 @@ class Miro_mqtt_client_handler():
 
     def on_connect(self, client, userdata, flags, rc):
         if rc:
-            print(f"Connection refused: {rc}")
+            print(f"Connection refused: {rc}\n")
         else:
-            print("Connected.")
+            print("Connected.\n")
 
     def on_disconnect(self, client, userdata, rc):
         print(f"Client disconnected: {client}")
