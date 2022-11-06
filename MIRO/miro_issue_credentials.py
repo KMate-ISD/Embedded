@@ -156,7 +156,7 @@ def write_creds_to_tag(ctx):
         
         # no feedback received, terminating access
         if d > AUTH_TIME:
-            raise Exception(f"No confirmation received. User not saved.")
+            raise Exception(f"No confirmation received.")
 
         # confirmation of delivery received through the authentication channel
         else:
@@ -164,6 +164,7 @@ def write_creds_to_tag(ctx):
             notify_OK(f"Credentials successfully transferred.")
 
     except Exception as e:
+        e.args = (*e.args, "\nUser not saved.")
         mqtt.revoke_access(creds[0])
         notify_NOK(e) if type(e) is not TimeoutError else print(e)
 
