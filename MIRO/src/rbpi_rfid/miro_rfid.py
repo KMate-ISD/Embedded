@@ -79,7 +79,7 @@ class Miro_rfid:
             return(None, None)
         id = self.__uid_to_num(uid)
         self.reader.MFRC522_SelectTag(uid)
-        lock_bytes = self.reader.MFRC522_Read(3)[2:]
+        lock_bytes = self.reader.MFRC522_Read(2)[2:]
         lock_bits = self.parse_lock_bytes([], lock_bytes)
         for i in range(len(blocks)):
             print(f"[blocks[i] - 4] => {blocks[i] - 4}")
