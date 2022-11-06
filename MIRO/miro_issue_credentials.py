@@ -102,84 +102,77 @@ def start_listener():
     mqtt.start()
 
 def write_creds_to_tag(ctx):
-    ret = NOK
-
-    print("Issuing credentials...")
-
-    global is_busy
-    # check if writing is already happening
-    if is_busy:
-        return(ret)
-    
-    # lock process
-    is_busy = True
-
-    # generate username and password for a node
-    creds = mqtt.generate_credentials(4)
-    mqtt.save_credentials(creds)
-
-    # add channel for authentication
-    auth = f"auth/{creds[0]}"
-    mqtt.add_topic(auth)
-    mqtt.subscribe(auth)
-    print(f"New user created: {creds[0]}")
-
-    # Preparing data to write to rfid tag
-    userpass = ''.join(creds)
-    ssid, psk = Miro_helper.get_wifi_credentials()
-    start = f"{chr(0xE0)}{chr(len(ssid))}"
-    next = f"{chr(0xED)}{chr(len(psk))}"
-    stop = f"{chr(0xEA)}{chr(len(ssid) + (len(psk)))}"
-    data = f"{userpass}{start}{ssid}{next}{psk}{stop}"
-    debug(data)
-
-    # save prepared data to rfid tag
     try:
+        ret = NOK
+        global is_busy
+
+        print("Issuing credentials...")
+
+        # check if writing is already happening
+        if is_busy:
+            return(ret)
+        
+        # lock process
+        is_busy = True
+
+        # generate username and password for a node
+        creds = mqtt.generate_credentials(4)
+        mqtt.save_credentials(creds)
+
+        # add channel for authentication
+        auth = f"auth/{creds[0]}"
+        mqtt.add_topic(auth)
+        mqtt.subscribe(auth)
+        print(f"User: {creds[0]}")
+
+        # Preparing data to write to rfid tag
+        userpass = ''.join(creds)
+        ssid, psk = Miro_helper.get_wifi_credentials()
+        start = f"{chr(0xE0)}{chr(len(ssid))}"
+        next = f"{chr(0xED)}{chr(len(psk))}"
+        stop = f"{chr(0xEA)}{chr(len(ssid) + (len(psk)))}"
+        data = f"{userpass}{start}{ssid}{next}{psk}{stop}"
+        debug(data)
+
+        # save prepared data to rfid tag
         rfid.write(data, DATA_BEGIN)
-    
-    # release lock on exception
-    except TimeoutError as to:
-        is_busy = False
-        print(to)
-        return(ret)
+
+        # release lock on exception
+        
+        notify_OK("Credentials saved to rfid tag.", 0.15)
+
+        # the node should confirm tag delivery in {AUTH_TIME} seconds
+        msg = f"Bring your tag near the MIRO node. Time available: "
+
+        t0 = t = time.time()
+        while t - t0 < AUTH_TIME and auth not in mqtt.last_msgs:
+            t = time.time()
+            d = t - t0
+            if not round(d, 1)%1:
+                rgb.blue_pulse(0.1)
+                print("\r%s%s"%(msg, f"{AUTH_TIME - round(d)}".ljust(2)), end='')
+            time.sleep(0.1)
+        print()
+        
+        # no feedback received, terminating access
+        if d > AUTH_TIME:
+            raise Exception(f"No confirmation received. User not saved.")
+
+        # confirmation of delivery received through the authentication channel
+        else:
+            ret = OK
+            notify_OK(f"Credentials successfully transferred.")
+
     except Exception as e:
-        is_busy = False
-        notify_NOK("Error while writing! Please try again.")
-        return(ret)
-    
-    notify_OK("Credentials saved to rfid tag.", 0.15)
-
-    # the node should confirm tag delivery in {AUTH_TIME} seconds
-    msg = f"Bring your tag near the MIRO node. Time available: "
-
-    t0 = t = time.time()
-    while t - t0 < AUTH_TIME and auth not in mqtt.last_msgs:
-        t = time.time()
-        d = t - t0
-        if not round(d, 1)%1:
-            rgb.blue_pulse(0.1)
-            print("\r%s%s"%(msg, f"{AUTH_TIME - round(d)}".ljust(2)), end='')
-        time.sleep(0.1)
-    print()
-    
-    # no feedback received, terminating access
-    if d > AUTH_TIME:
         mqtt.revoke_access(creds[0])
-        notify_NOK(f"No confirmation received. Access revoked from {creds[0]}")
+        notify_NOK(e) if type(e) is not TimeoutError else print(e)
 
-    # confirmation of delivery received through the authentication channel
-    else:
-        ret = OK
-        notify_OK(f"Credentials successfully transferred.")
-
-    # clean up
-    mqtt.topics.remove(auth)
-    mqtt.unsubscribe(auth)
-
-    # release lock
-    is_busy = False
-
-    return(ret)
+    finally:
+        # clean up
+        mqtt.topics.remove(auth)
+        mqtt.unsubscribe(auth)
+        is_busy = False
+        return(ret)
 
 try:
     if __name__ == "__main__":

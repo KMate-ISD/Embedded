@@ -139,8 +139,8 @@ class Miro_rfid:
         except TimeoutError:
             self.led.blue_flash(0.25, 7)
             raise
-        except Exception:
+        except Exception as e:
             self.led.red_flash(0.05, 10)
-            raise
+            raise Exception(f"Error during write loop: {e}")
         finally:
             self.led.all_off()
