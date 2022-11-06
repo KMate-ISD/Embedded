@@ -1,8 +1,17 @@
+from pprint import pprint
+
+DEBUG = 0
+
 class Miro_helper():
     passwordfile = "/etc/mosquitto/pwfile"
     pid_path = "/run/mosquitto/"
     pid_file = "mosquitto.pid"
     wifi_details = "/etc/wpa_supplicant/wpa_supplicant.conf"
+
+    @staticmethod
+    def debug(msg):
+        if DEBUG:
+            pprint(msg)
 
     @staticmethod
     def display_message(msg):

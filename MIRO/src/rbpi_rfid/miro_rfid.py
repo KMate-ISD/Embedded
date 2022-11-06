@@ -2,8 +2,8 @@
 
 import RPi.GPIO as GPIO
 import time
-from src.rbpi_gpio.miro_rgb import Miro_rgb
 from mfrc522 import MFRC522
+from src.miro_helper import DEBUG as DEBUG
 
 class Miro_rfid:
     def __init__(self, reader, led):
@@ -142,8 +142,9 @@ class Miro_rfid:
             block_count = len(data)
             blocks = range(block_initial, block_count + block_initial)
             id, data = self.__write_block_loop(data, blocks)
-            print(f"({id})")
-            self.print_data_readable(data, block_initial)
+            if DEBUG:
+                print(f"({id})")
+                self.print_data_readable(data, block_initial)
             self.led.green_flash(0.05, block_count)
         except TimeoutError:
             self.led.blue_flash(0.25, 7)

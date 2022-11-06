@@ -4,7 +4,6 @@ import time
 from functools import reduce
 from mfrc522 import MFRC522
 from src.miro_helper import Miro_helper
-from pprint import pprint
 from src.rbpi_gpio.miro_btn import Miro_btn
 from src.rbpi_mqtt.miro_mqtt_action_handler import Miro_mqtt_action_handler
 from src.rbpi_rfid.miro_rfid import Miro_rfid
@@ -30,14 +29,8 @@ SUPER_P     = "pass"
 OK          = 0
 NOK         = 1
 
-DEBUG       = 0
-
 
 global btn, rgb, rc, rfid, mqtt, is_busy
-
-def debug(msg):
-    if DEBUG:
-        pprint(msg)
 
 def initialize_context(btn=BTN_PIN, rgb=(LED_R, LED_G, LED_B), broker=BROKER, port=PORT):
     btn = Miro_btn(btn)
@@ -83,7 +76,7 @@ def setup(args):
                     cla[flag] = int(cla[flag])
                 elif flag == "-r":
                     cla[flag] = float(cla[flag])
-        debug(cla)
+        Miro_helper.debug(cla)
 
         is_parameterized = reduce(lambda a, b: a and b, [key in cla.keys() for key in params])
 
@@ -132,7 +125,7 @@ def write_creds_to_tag(ctx):
         next = f"{chr(0xED)}{chr(len(psk))}"
         stop = f"{chr(0xEA)}{chr(len(ssid) + (len(psk)))}"
         data = f"{userpass}{start}{ssid}{next}{psk}{stop}"
-        debug(data)
+        Miro_helper.debug(data)
 
         # save prepared data to rfid tag
         rfid.write(data, DATA_BEGIN)
