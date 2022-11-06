@@ -138,6 +138,10 @@ def write_creds_to_tag(ctx):
         rfid.write(data, DATA_BEGIN)
     
     # release lock on exception
+    except TimeoutError as to:
+        is_busy = False
+        print(to)
+        return(ret)
     except Exception as e:
         is_busy = False
         notify_NOK("Error while writing! Please try again.")
@@ -185,7 +189,7 @@ try:
         is_busy = False
         start_listener()
 
-        btn.add_handler(next(iter(btn.pins)), GPIO.FALLING, write_creds_to_tag)
+        btn.add_handler(next(iter(btn.pins)), GPIO.RISING, write_creds_to_tag)
 
         exit = input('Type "EXIT" to exit.\n')
         while (exit != "EXIT" and exit != "qq"):
