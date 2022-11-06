@@ -151,6 +151,6 @@ class Miro_rfid:
             raise
         except Exception as e:
             self.led.red_flash(0.05, 10)
-            raise Exception(f"Error during write loop. Please try a new card.")
+            raise Exception(f"Error during write loop: {e}.")
         finally:
             self.led.all_off()
