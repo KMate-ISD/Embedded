@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import RPi.GPIO as GPIO
+import time
 from src.rbpi_gpio.miro_rgb import Miro_rgb
 from mfrc522 import MFRC522
 
@@ -86,14 +87,26 @@ class Miro_rfid:
 
     def __read_block_loop(self, blocks):
         id, data = self.__read_block(blocks)
-        while not id:
+
+        t0, t = time.time()
+        while t - t0 < 10 and not id:
             id, data = self.__read_block(blocks)
+            t = time.time()
+        if not t - t0 < 10:
+            raise("Reading timeout.")
+
         return(id, data)
 
     def __write_block_loop(self, data, blocks):
         id, text_in = self.__write_block(data, blocks)
-        while not id:
+
+        t0, t = time.time()
+        while t - t0 < 10 and not id:
             id, text_in = self.__write_block(data, blocks)
+            t = time.time()
+        if not t - t0 < 10:
+            raise("Writing timeout.")
+
         return(id, text_in)
 
     def read(self, blocks):
