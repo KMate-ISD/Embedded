@@ -118,7 +118,7 @@ class Miro_rfid:
             self.print_data_readable(data, blocks[0])
             self.led.green_pulse(0.25)
         except TimeoutError:
-            self.led.blue_flash(0.25, 7)
+            self.led.blue_flash(0.25, 5)
             raise
         except Exception:
             self.led.red_pulse(0.25)
@@ -137,7 +137,7 @@ class Miro_rfid:
             self.print_data_readable(data, block_initial)
             self.led.green_flash(0.05, block_count)
         except TimeoutError:
-            self.led.blue_flash(0.25, 7)
+            self.led.blue_flash(0.25, 5)
             raise
         except Exception:
             self.led.red_flash(0.05, 10)
