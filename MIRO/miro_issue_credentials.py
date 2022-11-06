@@ -185,7 +185,7 @@ try:
         is_busy = False
         start_listener()
 
-        btn.add_handler(next(iter(btn.pins)), GPIO.RISING, write_creds_to_tag)
+        btn.add_handler(next(iter(btn.pins)), GPIO.FALLING, write_creds_to_tag)
 
         exit = input('Type "EXIT" to exit.\n')
         while (exit != "EXIT" and exit != "qq"):
