@@ -88,7 +88,7 @@ class Miro_rfid:
                 error_list.append(blocks[i])
         self.reader.MFRC522_StopCrypto1()
         if error_list:
-            raise Exception(f"Erroneous or locked block(s): {error_list}.")
+            raise Exception(f"Some blocks might be locked: {error_list}.")
         compare_i = [data[i][0:4] for i in range(len(blocks))]
         compare_o = [self.reader.MFRC522_Read(n)[0:4] for n in blocks]
         assert compare_i == compare_o, f"Part of the data couldn't be written. Check tag data blocks for reference: {compare_o}."
@@ -150,6 +150,6 @@ class Miro_rfid:
             raise
         except Exception as e:
             self.led.red_flash(0.05, 10)
-            raise Exception(f"Error during write loop: {e}")
+            raise Exception(f"Write failed. {e}")
         finally:
             self.led.all_off()
