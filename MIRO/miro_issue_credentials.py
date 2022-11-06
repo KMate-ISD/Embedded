@@ -30,7 +30,7 @@ SUPER_P     = "pass"
 OK          = 0
 NOK         = 1
 
-DEBUG       = 1
+DEBUG       = 0
 
 
 global btn, rgb, rc, rfid, mqtt, is_busy
@@ -161,7 +161,7 @@ def write_creds_to_tag(ctx):
         # confirmation of delivery received through the authentication channel
         else:
             ret = OK
-            notify_OK(f"Credentials successfully transferred.")
+            notify_OK(f"Credentials successfully transferred.\nUser saved.")
 
     except Exception as e:
         msg = "User not saved."
