@@ -156,16 +156,17 @@ def write_creds_to_tag(ctx):
             rgb.blue_pulse(0.1)
             print("\r%s%s"%(msg, f"{AUTH_TIME - round(d)}".ljust(2)), end='')
         time.sleep(0.1)
+    print()
     
     # no feedback received, terminating access
     if d > AUTH_TIME:
         mqtt.revoke_access(creds[0])
-        notify_NOK(f"\nNo confirmation received. Access revoked from {creds[0]}")
+        notify_NOK(f"No confirmation received. Access revoked from {creds[0]}")
 
     # confirmation of delivery received through the authentication channel
     else:
         ret = OK
-        notify_OK(f"\nCredentials successfully transferred.")
+        notify_OK(f"Credentials successfully transferred.")
 
     # clean up
     mqtt.topics.remove(auth)
