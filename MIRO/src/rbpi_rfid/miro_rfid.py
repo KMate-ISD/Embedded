@@ -93,7 +93,7 @@ class Miro_rfid:
             id, data = self.__read_block(blocks)
             t = time.time()
         if not t - t0 < 10:
-            raise("Reading timeout.")
+            raise TimeoutError("Reading timeout.")
 
         return(id, data)
 
@@ -105,7 +105,7 @@ class Miro_rfid:
             id, text_in = self.__write_block(data, blocks)
             t = time.time()
         if not t - t0 < 10:
-            raise("Writing timeout.")
+            raise TimeoutError("Writing timeout.")
 
         return(id, text_in)
 
@@ -117,6 +117,9 @@ class Miro_rfid:
             print(f"({id})")
             self.print_data_readable(data, blocks[0])
             self.led.green_pulse(0.25)
+        except TimeoutError as to:
+            self.led.blue_flash(0.25, 7)
+            print(to)
         except Exception:
             self.led.red_pulse(0.25)
             raise
@@ -133,6 +136,9 @@ class Miro_rfid:
             print(f"({id})")
             self.print_data_readable(data, block_initial)
             self.led.green_flash(0.05, block_count)
+        except TimeoutError as to:
+            self.led.blue_flash(0.25, 7)
+            print(to)
         except Exception:
             self.led.red_flash(0.05, 10)
             raise
