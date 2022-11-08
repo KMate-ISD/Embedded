@@ -18,7 +18,13 @@
  * MACRO
  */
 
-#define BAUD_RATE       9600
+#define BTN             0
+#define LED             2
+#define RF_RST          22
+#define RF_SS           21
+#define TIMER0          0
+#define TIMER1          1
+
 #define DEBUG(a)        if (debug) { a; }
 
 
@@ -27,10 +33,10 @@
  */
 
   // const
-const uint8_t BTN       = 0;
-const uint8_t LED       = 2;
-const uint8_t RF_RST    = 22;
-const uint8_t RF_SS     = 21;
+const size_t BAUD_RATE  = 9600;
+const size_t REST       = 6000;
+const size_t TIMER_DIV  = 80;
+const size_t TIMER_TRSH = 500000;
 
   // NVM
 Preferences preferences;
@@ -48,23 +54,24 @@ const char* mqtt_user;
 PubSubClient* mqtt_client;
 
   // Op.
-uint8_t debug           = 1;
-uint8_t miro_state      = 0;
+bool held               = false;
+bool debug              = true;
+uint8_t miro_state      = 0xFF;
 size_t t0;
+size_t td               = 0;
 
   // Peripherals
-uint8_t int_mode        = RISING;
-uint8_t led_state       = 0;
-uint8_t btn_state       = 0;
+bool led_state          = false;
+bool btn_state          = false;
 
   // Timer
 bool autoreload         = true;
 bool edge               = true;
 bool timer_count_up     = true;
-uint64_t alarm_treshold = 500000;
-uint16_t timer_divider  = 80;
-uint8_t timer_number    = 0;
-hw_timer_t* timer;
+uint64_t alarm_treshold = TIMER_TRSH;
+uint16_t timer_divider  = TIMER_DIV;
+hw_timer_t* timer_cycle;
+hw_timer_t* timer_span;
 
 
 /*
@@ -79,8 +86,25 @@ void mqtt_reconnect(void);
 void on_message(const char*, byte*, uint8_t);
 void parse_ip_to_string(const char*, uint8_t*);
 
-void IRAM_ATTR ISR(void);
-void IRAM_ATTR on_alarm(void);
+// void IRAM_ATTR ISR_F(void);
+void IRAM_ATTR ISR_R(void);
+void IRAM_ATTR on_alarm_cycle(void);
+// void IRAM_ATTR on_alarm_span(void);
+
+
+/*
+ * ENUM
+ */
+
+enum State
+{
+  Initialize,
+  Listen,
+  Normal_op,
+  Transmit,
+  Halt,
+  Deep_sleep
+};
 
 
 /*
@@ -90,6 +114,7 @@ void IRAM_ATTR on_alarm(void);
 void setup() {
   // [0] Initialize
     // Op.
+  miro_state = Initialize;
   Serial.begin(BAUD_RATE);
   DEBUG(Serial.println())
 
@@ -113,14 +138,15 @@ void setup() {
     // Peripherals
   pinMode(LED, OUTPUT);
   pinMode(BTN, INPUT);
-  attachInterrupt(BTN, ISR, int_mode);
+  //attachInterrupt(BTN, ISR_F, FALLING);
+  attachInterrupt(BTN, ISR_R, RISING);
 
     // Timer
   init_timer();
   
   // [1] Listen
-  miro_state = 1;
-  miro_state = 2;
+  miro_state = Listen;
+  miro_state = Normal_op;
 }
 
 
@@ -134,7 +160,7 @@ void loop() {
   mqtt_client->loop();
 
   size_t t = millis();
-  if (t - t0 > 20000)
+  if (t - t0 > REST*5)
   {
     t0 = t;
     Serial.print("state ");
@@ -153,12 +179,12 @@ void init_wifi()
   WiFi.mode(WIFI_STA);
   WiFi.begin(wlan_ssid, wlan_psk);
   
-  DEBUG(Serial.print("Connecting to Wi-Fi .."))
+  DEBUG(Serial.print("Connecting to Wi-Fi.."))
   
   while (WiFi.status() != WL_CONNECTED)
   {
     DEBUG(Serial.print('.'));
-    delay(1000);
+    delay(REST/6);
   }
   
   DEBUG(Serial.println(WiFi.localIP()))
@@ -173,10 +199,17 @@ void init_mqtt()
 
 void init_timer()
 {
-  timer = timerBegin(timer_number, timer_divider, timer_count_up);
-  timerAttachInterrupt(timer, &on_alarm, edge);
-  timerAlarmWrite(timer, alarm_treshold, autoreload);
-  timerAlarmEnable(timer);
+  timer_cycle = timerBegin(TIMER0, timer_divider, timer_count_up);
+  timerAttachInterrupt(timer_cycle, &on_alarm_cycle, edge);
+  timerAlarmWrite(timer_cycle, alarm_treshold, autoreload);
+  timerAlarmEnable(timer_cycle);
+  // timerStop(timer_span);
+
+  // timer_span = timerBegin(TIMER1, timer_divider, timer_count_up);
+  // timerAttachInterrupt(timer_span, &on_alarm_span, edge);
+  // timerAlarmWrite(timer_span, alarm_treshold, autoreload);
+  // timerAlarmEnable(timer_span);
+  // timerStop(timer_span);
 }
 
   // MQTT
@@ -196,8 +229,10 @@ void mqtt_reconnect()
       DEBUG(
         Serial.print("failed. rc=");
         Serial.println(mqtt_client->state());
-        Serial.println("Retry in 5 seconds."))
-      delay(5000);
+        Serial.print("Retry in ");
+        Serial.print(REST/1000);
+        Serial.println(" seconds."))
+      delay(REST);
     }
   }
 }
@@ -234,10 +269,16 @@ void on_message(const char* topic, byte* msg, uint8_t len)
       Serial.print("Debug mode: ");
       Serial.println(debug);
     }
-    timerSetDivider(timer, timer_divider);
+    timerSetDivider(timer_cycle, timer_divider);
   }
 
   free(buf);
+}
+
+  // HARD RESET
+void hr()
+{
+
 }
 
   // HELPER
@@ -250,22 +291,51 @@ void parse_ip_to_string(const char* dest, uint8_t* ip) {
  * ISR
  */
 
-void IRAM_ATTR ISR()
+// void IRAM_ATTR ISR_F()
+// {
+//   miro_state = Normal_op;
+//   timerStart(timer_span);
+//   digitalWrite(LED, led_state = btn_state = !btn_state);
+//   DEBUG(Serial.println("Button on GPIO0 is being pressed."))
+// }
+
+void IRAM_ATTR ISR_R()
 {
-  digitalWrite(LED, led_state = btn_state = !btn_state);
-  if (btn_state)
+  if (miro_state != Halt)
   {
-    if (!timerStarted(timer)) { timerStart(timer); }
-    timerRestart(timer);
+    digitalWrite(LED, led_state = btn_state = !btn_state);
+    if (btn_state)
+    {
+      timerStart(timer_cycle);
+    }
+    else
+    {
+      timerStop(timer_cycle);
+      timerRestart(timer_cycle);
+    }
+    DEBUG(Serial.println("Button on GPIO0 being depressed."))
   }
-  else
-  {
-    timerStop(timer);
-  }
-  DEBUG(Serial.println("Button on GPIO0 pressed.");)
 }
 
-void IRAM_ATTR on_alarm()
+void IRAM_ATTR on_alarm_cycle()
 {
   if (btn_state) { digitalWrite(LED, led_state = !led_state); }
 }
+
+// void IRAM_ATTR on_alarm_span()
+// {
+//   held = !held;
+//   if (held)
+//   {
+//     timerSetDivider(timer_span, timer_divider*4);
+//     timerRestart(timer_span);
+//   }
+//   else
+//   {
+//     timerStop(timer_span);
+//     timerRestart(timer_span);
+//     digitalWrite(LED, led_state = btn_state = !btn_state);
+//     held = false;
+//     miro_state = Halt;
+//   }
+// }
