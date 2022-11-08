@@ -181,10 +181,9 @@ void loop()
     case Deep_sleep:
       break;
     
-    case Undefined:
+    case Reset:
     default:
       ESP.restart();
-      break;
   }
 }
 
@@ -295,12 +294,6 @@ void on_message(const char* topic, byte* msg, uint8_t len)
   free(buf);
 }
 
-  // HARD RESET
-void hr()
-{
-  miro_state = Undefined;
-}
-
   // HELPER
 void parse_ip_to_string(const char* dest, uint8_t* ip) {
   snprintf((char*)dest, 16, "%d.%d.%d.%d\0", *(ip + 0), *(ip + 1), *(ip + 2), *(ip + 3));
@@ -315,13 +308,14 @@ void IRAM_ATTR ISR()
 {
   if (miro_state == Reset)
   {
-    hr();
+    held = false;
   }
   else if (held)
   {
     timerStop(timer_span);
     timerRestart(timer_span);
-    digitalWrite(LED, led_state = switch_state = !switch_state);
+    switch_state = !switch_state;
+    digitalWrite(LED, led_state = LOW);
     if (switch_state)
     {
       timerStart(timer_cycle);
@@ -335,11 +329,11 @@ void IRAM_ATTR ISR()
   }
   else
   {
-    held = true;
     timerStop(timer_cycle);
     timerRestart(timer_cycle);
     timerStart(timer_span);
     digitalWrite(LED, led_state = HIGH);
+    held = true;
   }
 }
 
@@ -351,8 +345,7 @@ void IRAM_ATTR on_alarm_cycle()
 void IRAM_ATTR on_alarm_span()
 {
   digitalWrite(LED, led_state = LOW);
-  held = false;
-  miro_state = Reset;
   timerStop(timer_span);
   timerRestart(timer_span);
+  miro_state = Reset;
 }
