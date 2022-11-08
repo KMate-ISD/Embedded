@@ -62,7 +62,7 @@ size_t td               = 0;
 
   // Peripherals
 bool led_state          = false;
-bool btn_state          = false;
+bool switch_state       = false;
 
   // Timer
 bool autoreload         = true;
@@ -86,10 +86,9 @@ void mqtt_reconnect(void);
 void on_message(const char*, byte*, uint8_t);
 void parse_ip_to_string(const char*, uint8_t*);
 
-// void IRAM_ATTR ISR_F(void);
-void IRAM_ATTR ISR_R(void);
+void IRAM_ATTR ISR(void);
 void IRAM_ATTR on_alarm_cycle(void);
-// void IRAM_ATTR on_alarm_span(void);
+void IRAM_ATTR on_alarm_span(void);
 
 
 /*
@@ -138,8 +137,7 @@ void setup() {
     // Peripherals
   pinMode(LED, OUTPUT);
   pinMode(BTN, INPUT);
-  //attachInterrupt(BTN, ISR_F, FALLING);
-  attachInterrupt(BTN, ISR_R, RISING);
+  attachInterrupt(BTN, ISR, CHANGE);
 
     // Timer
   init_timer();
@@ -203,13 +201,13 @@ void init_timer()
   timerAttachInterrupt(timer_cycle, &on_alarm_cycle, edge);
   timerAlarmWrite(timer_cycle, alarm_treshold, autoreload);
   timerAlarmEnable(timer_cycle);
-  // timerStop(timer_span);
+  timerStop(timer_cycle);
 
-  // timer_span = timerBegin(TIMER1, timer_divider, timer_count_up);
-  // timerAttachInterrupt(timer_span, &on_alarm_span, edge);
-  // timerAlarmWrite(timer_span, alarm_treshold, autoreload);
-  // timerAlarmEnable(timer_span);
-  // timerStop(timer_span);
+  timer_span = timerBegin(TIMER1, timer_divider*5, timer_count_up);
+  timerAttachInterrupt(timer_span, &on_alarm_span, edge);
+  timerAlarmWrite(timer_span, alarm_treshold, autoreload);
+  timerAlarmEnable(timer_span);
+  timerStop(timer_span);
 }
 
   // MQTT
@@ -278,7 +276,8 @@ void on_message(const char* topic, byte* msg, uint8_t len)
   // HARD RESET
 void hr()
 {
-
+  Serial.println("That's a reset.");
+  miro_state = Normal_op;
 }
 
   // HELPER
@@ -291,20 +290,18 @@ void parse_ip_to_string(const char* dest, uint8_t* ip) {
  * ISR
  */
 
-// void IRAM_ATTR ISR_F()
-// {
-//   miro_state = Normal_op;
-//   timerStart(timer_span);
-//   digitalWrite(LED, led_state = btn_state = !btn_state);
-//   DEBUG(Serial.println("Button on GPIO0 is being pressed."))
-// }
-
-void IRAM_ATTR ISR_R()
+void IRAM_ATTR ISR()
 {
-  if (miro_state != Halt)
+  if (miro_state == Halt)
   {
-    digitalWrite(LED, led_state = btn_state = !btn_state);
-    if (btn_state)
+    hr();
+  }
+  else if (held)
+  {
+    timerStop(timer_span);
+    timerRestart(timer_span);
+    digitalWrite(LED, led_state = switch_state = !switch_state);
+    if (switch_state)
     {
       timerStart(timer_cycle);
     }
@@ -313,29 +310,28 @@ void IRAM_ATTR ISR_R()
       timerStop(timer_cycle);
       timerRestart(timer_cycle);
     }
-    DEBUG(Serial.println("Button on GPIO0 being depressed."))
+    held = false;
+  }
+  else
+  {
+    held = true;
+    timerStop(timer_cycle);
+    timerRestart(timer_cycle);
+    timerStart(timer_span);
+    digitalWrite(LED, led_state = HIGH);
   }
 }
 
 void IRAM_ATTR on_alarm_cycle()
 {
-  if (btn_state) { digitalWrite(LED, led_state = !led_state); }
+  if (switch_state) { digitalWrite(LED, led_state = !led_state); }
 }
 
-// void IRAM_ATTR on_alarm_span()
-// {
-//   held = !held;
-//   if (held)
-//   {
-//     timerSetDivider(timer_span, timer_divider*4);
-//     timerRestart(timer_span);
-//   }
-//   else
-//   {
-//     timerStop(timer_span);
-//     timerRestart(timer_span);
-//     digitalWrite(LED, led_state = btn_state = !btn_state);
-//     held = false;
-//     miro_state = Halt;
-//   }
-// }
+void IRAM_ATTR on_alarm_span()
+{
+  digitalWrite(LED, led_state = LOW);
+  held = false;
+  miro_state = Halt;
+  timerStop(timer_span);
+  timerRestart(timer_span);
+}
