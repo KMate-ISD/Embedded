@@ -1,11 +1,11 @@
 /*
  #  STATE             TRIGGER
  0  Initialize        power on
- 1  Listen            Initialize phase ends
+ 1  Listen            Initialize phase ends while no credentials are saved / On board flash button released while in Normal operational state.
  2  Normal operation  Connection established
- 3  Transmit          On-board flash button released while not in Reset state
- 4  Reset             On-board flash button held for 5 seconds
- 5  Deep sleep        Listen phase ends AND no credentials are saved
+ 3  Transmit          On-board flash button released while in Listen state
+ 4  Reset             On-board flash button pressed and held for 5 seconds
+ 5  Deep sleep        Listen phase ends while no credentials are saved
  */
 
 
@@ -43,6 +43,12 @@ enum State
   Undefined = 0xFF
 };
 
+enum Switch_state
+{
+  sw_normal,
+  sw_receive,
+  sw_transmit
+};
 
 /*
  * GLOBAL
@@ -78,7 +84,7 @@ size_t td               = 0;
 
   // Peripherals
 bool led_state          = false;
-bool switch_state       = false;
+uint8_t switch_state    = sw_normal;
 
   // Timer
 bool autoreload         = true;
@@ -314,17 +320,25 @@ void IRAM_ATTR ISR()
   {
     timerStop(timer_span);
     timerRestart(timer_span);
-    switch_state = !switch_state;
+    switch_state++;
     digitalWrite(LED, led_state = LOW);
-    if (switch_state)
+
+    timerStop(timer_cycle);
+    timerRestart(timer_cycle);
+    if (switch_state%3 != sw_normal)
     {
+      if (switch_state%3 == sw_transmit)
+      {
+        timer_divider = TIMER_DIV >> 3;
+      }
+      else
+      {
+        timer_divider = TIMER_DIV >> 1;
+      }
+      timerSetDivider(timer_cycle, timer_divider);
       timerStart(timer_cycle);
     }
-    else
-    {
-      timerStop(timer_cycle);
-      timerRestart(timer_cycle);
-    }
+
     held = false;
   }
   else
