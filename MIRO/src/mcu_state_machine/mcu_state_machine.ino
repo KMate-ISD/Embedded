@@ -1,0 +1,271 @@
+/*
+ #  STATE             TRIGGER
+ 0  Initialize        power on
+ 1  Listen            Initialize phase ends
+ 2  Normal operation  Connection established
+ 3  Transmit          On-board flash button voltage rising AND not in Halt state
+ 4  Halt              On-board flash button held for at least 1 sec
+ 5  Deep sleep        Listen phase ends AND no credentials are saved
+ */
+
+
+#include <Preferences.h>
+#include <PubSubClient.h>
+#include <WiFi.h>
+
+
+/*
+ * MACRO
+ */
+
+#define BAUD_RATE       9600
+#define DEBUG(a)        if (debug) { a; }
+
+
+/*
+ * GLOBAL
+ */
+
+  // const
+const uint8_t BTN       = 0;
+const uint8_t LED       = 2;
+const uint8_t RF_RST    = 22;
+const uint8_t RF_SS     = 21;
+
+  // NVM
+Preferences preferences;
+
+  // Wi-Fi
+const char* wlan_ssid;
+const char* wlan_psk;
+WiFiClient wifi_client;
+
+  // MQTT
+uint16_t mqtt_port;
+const char* mqtt_broker;
+const char* mqtt_pass;
+const char* mqtt_user;
+PubSubClient* mqtt_client;
+
+  // Op.
+uint8_t debug           = 1;
+uint8_t miro_state      = 0;
+size_t t0;
+
+  // Peripherals
+uint8_t int_mode        = RISING;
+uint8_t led_state       = 0;
+uint8_t btn_state       = 0;
+
+  // Timer
+bool autoreload         = true;
+bool edge               = true;
+bool timer_count_up     = true;
+uint64_t alarm_treshold = 500000;
+uint16_t timer_divider  = 80;
+uint8_t timer_number    = 0;
+hw_timer_t* timer;
+
+
+/*
+ * FUNC
+ */
+
+void init_wifi(void);
+void init_mqtt(void);
+void init_timer(void);
+void mqtt_reconnect(void);
+
+void on_message(const char*, byte*, uint8_t);
+void parse_ip_to_string(const char*, uint8_t*);
+
+void IRAM_ATTR ISR(void);
+void IRAM_ATTR on_alarm(void);
+
+
+/*
+ * STATE 0, 1
+ */
+
+void setup() {
+  // [0] Initialize
+    // Op.
+  Serial.begin(BAUD_RATE);
+  DEBUG(Serial.println())
+
+    // NVM
+
+
+    // WLAN
+  wlan_ssid   = "Telekom-B4Wf5Y";
+  wlan_psk    = "PIcSafaSZ_+9*";
+  init_wifi();
+
+    // MQTT
+  mqtt_port   = 1883;
+  mqtt_user   = "user";
+  mqtt_pass   = "pass";
+  mqtt_broker = (const char*)malloc(16*sizeof(char*));
+  uint8_t mqtt_broker_bytes[4] = {192, 168, 1, 85};
+  parse_ip_to_string(mqtt_broker, mqtt_broker_bytes);
+  init_mqtt();
+
+    // Peripherals
+  pinMode(LED, OUTPUT);
+  pinMode(BTN, INPUT);
+  attachInterrupt(BTN, ISR, int_mode);
+
+    // Timer
+  init_timer();
+  
+  // [1] Listen
+  miro_state = 1;
+  miro_state = 2;
+}
+
+
+/*
+ * STATE 2, 3, 4, 5
+ */
+
+void loop() {
+  // [2] Normal operation
+  if (!mqtt_client->connected()) { mqtt_reconnect(); }
+  mqtt_client->loop();
+
+  size_t t = millis();
+  if (t - t0 > 20000)
+  {
+    t0 = t;
+    Serial.print("state ");
+    Serial.println(miro_state);
+  }
+}
+
+
+/*
+ * FUNC DEF
+ */
+
+  // Initialize
+void init_wifi()
+{
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(wlan_ssid, wlan_psk);
+  
+  DEBUG(Serial.print("Connecting to Wi-Fi .."))
+  
+  while (WiFi.status() != WL_CONNECTED)
+  {
+    DEBUG(Serial.print('.'));
+    delay(1000);
+  }
+  
+  DEBUG(Serial.println(WiFi.localIP()))
+}
+
+void init_mqtt()
+{
+  mqtt_client = new PubSubClient(wifi_client);
+  mqtt_client->setServer(mqtt_broker, mqtt_port);
+  mqtt_client->setCallback(on_message);
+}
+
+void init_timer()
+{
+  timer = timerBegin(timer_number, timer_divider, timer_count_up);
+  timerAttachInterrupt(timer, &on_alarm, edge);
+  timerAlarmWrite(timer, alarm_treshold, autoreload);
+  timerAlarmEnable(timer);
+}
+
+  // MQTT
+void mqtt_reconnect()
+{
+  while (!mqtt_client->connected())
+  {
+    DEBUG(Serial.print("Reconnecting to MQTT broker... "))
+    
+    if (mqtt_client->connect("ESP32Client", mqtt_user, mqtt_pass))
+    {
+      DEBUG(Serial.println("connected."))
+      mqtt_client->subscribe("admin/debug");
+    }
+    else
+    {
+      DEBUG(
+        Serial.print("failed. rc=");
+        Serial.println(mqtt_client->state());
+        Serial.println("Retry in 5 seconds."))
+      delay(5000);
+    }
+  }
+}
+
+void on_message(const char* topic, byte* msg, uint8_t len)
+{
+  Serial.print(topic);
+  Serial.print(" | ");
+  
+  char* buf = (char*)malloc((len + 1)*sizeof(char));
+  uint8_t i;
+  for (i = 0; i < len; i++)
+  {
+    Serial.print((const char)*(msg + i));
+    *(buf + i) = (const char)*(msg + i);
+  }
+  *(buf + i) = '\0';
+  
+  Serial.println();
+
+  if (!strcmp(topic, "admin/debug"))
+  {
+    if(!strcmp(buf, "DOUBLE"))
+    {
+      timer_divider >>= 1;
+    }
+    else if(!strcmp(buf, "HALVE"))
+    {
+      timer_divider <<= 1;
+    }
+    else if(!strcmp(buf, "DEBUG"))
+    {
+      debug = !debug;
+      Serial.print("Debug mode: ");
+      Serial.println(debug);
+    }
+    timerSetDivider(timer, timer_divider);
+  }
+
+  free(buf);
+}
+
+  // HELPER
+void parse_ip_to_string(const char* dest, uint8_t* ip) {
+  snprintf((char*)dest, 16, "%d.%d.%d.%d\0", *(ip + 0), *(ip + 1), *(ip + 2), *(ip + 3));
+}
+
+
+/*
+ * ISR
+ */
+
+void IRAM_ATTR ISR()
+{
+  digitalWrite(LED, led_state = btn_state = !btn_state);
+  if (btn_state)
+  {
+    if (!timerStarted(timer)) { timerStart(timer); }
+    timerRestart(timer);
+  }
+  else
+  {
+    timerStop(timer);
+  }
+  DEBUG(Serial.println("Button on GPIO0 pressed.");)
+}
+
+void IRAM_ATTR on_alarm()
+{
+  if (btn_state) { digitalWrite(LED, led_state = !led_state); }
+}

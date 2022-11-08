@@ -2,8 +2,10 @@
 #include <SPI.h>        // SPI bus
 
 /* Wiring */
-#define SS_PIN          21
-#define RST_PIN         22
+#define RF_SS           21
+#define RF_RST          22
+
+
 
 /* UL tag
  * -------------------------
@@ -32,7 +34,7 @@
 uint8_t   buffer_data_size;
 uint8_t*  buffer_data;
 char*     buffer_message;
-MFRC522   rfid(SS_PIN, RST_PIN);
+MFRC522   rfid(RF_SS, RF_RST);
 
 /* Const */
 String    miro        = "MIRO";
@@ -48,10 +50,21 @@ uint8_t     button_state  = 0;
 uint8_t     int_mode      = FALLING;
 hw_timer_t* int_timer     = NULL;
 
+/* Timer */
+uint8_t timer_number;
+uint16_t timer_divider;
+bool timer_count_up;
+hw_timer_t* timer;
+void (*interrupt_vector)(void);
+bool edge;
+uint64_t alarm_treshold;
+bool autoreload;
+
 /* Funcs */
 void IRAM_ATTR ISR(void);
 void IRAM_ATTR on_timer();
 void print_hex(void);
+void print_buffer_to_serial(uint8_t*);
 
 /* Init */
 void setup()
@@ -70,6 +83,32 @@ void setup()
   attachInterrupt(button, ISR, int_mode);
 
   /* Timer setup */
+    //timerBegin)
+  uint8_t timer_number;
+  uint16_t timer_divider;
+  bool timer_count_up;
+    //timerAttachInterrupt
+  hw_timer_t* timer;
+  void (*interrupt_vector)(void);
+  bool edge;
+    //timerAlarmWrite
+  timer
+  uint64_t alarm_treshold;
+  bool autoreload;
+    //timerAlarmEnable
+  timer
+  /* https://espressif-docs.readthedocs-hosted.com/projects/arduino-esp32/en/latest/api/timer.html */
+    //timerAlarmReadSeconds(timer)
+    //timerReadSeconds(timer)
+    //timerSetDivider(timer, timer_divider)
+    //timerStart(timer)
+    //timerStop(timer)
+    //timerRestart(timer)
+    //timerDetachInterrupt(timer)
+  
+
+  uint8_t setup_timer(hw_timer_t* int_timer, void (*f)(void), bool edge)
+
   int_timer = timerBegin(0, 80, true);
   timerAttachInterrupt(int_timer, &on_timer, true);
   timerAlarmWrite(int_timer, 500000, true);
@@ -84,13 +123,8 @@ void setup()
   *(buffer_data + BLOCK_SIZE) = 0;
 
   /* Print buffer to serial */
-  i = 0;
   Serial.println();
-  while(*(buffer_data + i))
-  {
-    Serial.print((char)*(buffer_data + i++));
-  }
-  Serial.println();
+  print_buffer_to_serial(buffer_data)
 
   DEBUG(Serial.println("Debug mode ON.");)
 }
@@ -221,6 +255,16 @@ void print_hex(byte* bytes, uint8_t len)
   {
     Serial.print(*(bytes + i) < 0x10 ? " 0" : " ");
     Serial.print(*(bytes + i), HEX);
+  }
+  Serial.println();
+}
+
+void print_buffer_to_serial(uint8_t* buffer)
+{
+  i = 0;
+  while(*(buffer + i))
+  {
+    Serial.print((char)*(buffer + i++));
   }
   Serial.println();
 }
