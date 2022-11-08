@@ -3,8 +3,8 @@
  0  Initialize        power on
  1  Listen            Initialize phase ends
  2  Normal operation  Connection established
- 3  Transmit          On-board flash button voltage rising AND not in Halt state
- 4  Halt              On-board flash button held for at least 1 sec
+ 3  Transmit          On-board flash button released while not in Reset state
+ 4  Reset             On-board flash button held for 5 seconds
  5  Deep sleep        Listen phase ends AND no credentials are saved
  */
 
@@ -26,6 +26,22 @@
 #define TIMER1          1
 
 #define DEBUG(a)        if (debug) { a; }
+
+
+/*
+ * ENUM
+ */
+
+enum State
+{
+  Initialize,
+  Listen,
+  Normal_op,
+  Transmit,
+  Reset,
+  Deep_sleep,
+  Undefined = 0xFF
+};
 
 
 /*
@@ -56,7 +72,7 @@ PubSubClient* mqtt_client;
   // Op.
 bool held               = false;
 bool debug              = true;
-uint8_t miro_state      = 0xFF;
+uint8_t miro_state      = Undefined;
 size_t t0;
 size_t td               = 0;
 
@@ -92,25 +108,11 @@ void IRAM_ATTR on_alarm_span(void);
 
 
 /*
- * ENUM
- */
-
-enum State
-{
-  Initialize,
-  Listen,
-  Normal_op,
-  Transmit,
-  Halt,
-  Deep_sleep
-};
-
-
-/*
  * STATE 0, 1
  */
 
-void setup() {
+void setup()
+{
   // [0] Initialize
     // Op.
   miro_state = Initialize;
@@ -144,7 +146,6 @@ void setup() {
   
   // [1] Listen
   miro_state = Listen;
-  miro_state = Normal_op;
 }
 
 
@@ -152,17 +153,38 @@ void setup() {
  * STATE 2, 3, 4, 5
  */
 
-void loop() {
+void loop()
+{
   // [2] Normal operation
-  if (!mqtt_client->connected()) { mqtt_reconnect(); }
-  mqtt_client->loop();
-
-  size_t t = millis();
-  if (t - t0 > REST*5)
+  switch (miro_state)
   {
-    t0 = t;
-    Serial.print("state ");
-    Serial.println(miro_state);
+    case Listen:
+      miro_state = Normal_op;
+      break;
+
+    case Normal_op:
+      if (!mqtt_client->connected()) { mqtt_reconnect(); }
+      mqtt_client->loop();
+
+      td = t0 = millis();
+      if (td - t0 > REST*5)
+      {
+        t0 = td;
+        Serial.print("state ");
+        Serial.println(miro_state);
+      }
+      break;
+
+    case Transmit:
+      break;
+
+    case Deep_sleep:
+      break;
+    
+    case Undefined:
+    default:
+      ESP.restart();
+      break;
   }
 }
 
@@ -276,8 +298,7 @@ void on_message(const char* topic, byte* msg, uint8_t len)
   // HARD RESET
 void hr()
 {
-  Serial.println("That's a reset.");
-  miro_state = Normal_op;
+  miro_state = Undefined;
 }
 
   // HELPER
@@ -292,7 +313,7 @@ void parse_ip_to_string(const char* dest, uint8_t* ip) {
 
 void IRAM_ATTR ISR()
 {
-  if (miro_state == Halt)
+  if (miro_state == Reset)
   {
     hr();
   }
@@ -331,7 +352,7 @@ void IRAM_ATTR on_alarm_span()
 {
   digitalWrite(LED, led_state = LOW);
   held = false;
-  miro_state = Halt;
+  miro_state = Reset;
   timerStop(timer_span);
   timerRestart(timer_span);
 }
