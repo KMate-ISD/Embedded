@@ -136,11 +136,11 @@ uint8_t check_if_preferences_has_keys(uint8_t args_count, ...)
 {
   va_list args;
   uint8_t i;
-  uint8_t log_val;
+  uint8_t log_val = 1;
   va_start(args, args_count);
   for (i = 0; i < args_count; i++)
   {
-    log_val += preferences.isKey(va_arg(args, const char*));
+    log_val &= preferences.isKey(va_arg(args, const char*));
   }
   va_end(args);
   return(log_val);
@@ -172,11 +172,11 @@ void setup()
     && exist_psk
     && exist_ssid);
 
-  bool exist2 = check_if_preferences_has_keys(6, "mqtt_port", "mqtt_broker", "mqtt_user", "mqtt_pass", "wlan_psk", "wlan_ssid");
+  uint8_t exist2 = check_if_preferences_has_keys(6, "mqtt_port", "mqtt_broker", "mqtt_user", "mqtt_pass", "wlan_psk", "wlan_ssid");
   Serial.print("exist2: ");
   Serial.println(exist2);
 
-  if (exist)
+  if (exist2)
   {
     creds.len_wlan_psk = preferences.getUChar("len_psk");
     creds.len_wlan_ssid = preferences.getUChar("len_ssid");
@@ -232,7 +232,7 @@ void setup()
   init_mqtt();
 
     // Creds
-  if (1 || !exist)
+  if (!exist2)
   {
     preferences.begin("miro_creds", false);
     Serial.print("Writing stuff to NVM. ");
