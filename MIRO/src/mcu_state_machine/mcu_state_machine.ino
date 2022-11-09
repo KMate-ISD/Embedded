@@ -9,59 +9,14 @@
  */
 
 
-#include <Preferences.h>
 #include <PubSubClient.h>
 #include <WiFi.h>
-#include <cstdarg>
+#include "mcu_credentials_processor.h"
 
-
-/*
- * MACRO
- */
-
-#define BTN                   0
-#define LED                   2
-#define RF_RST                22
-#define RF_SS                 21
-#define TIMER0                0
-#define TIMER1                1
-
-#define DEBUG(a)              if (debug) { a; }
-
-
-/*
- * ENUM
- */
-
-enum State
-{
-  Initialize,
-  Listen,
-  Normal_op,
-  Transmit,
-  Reset,
-  Deep_sleep,
-  Undefined = 0xFF
-};
-
-enum Switch_state
-{
-  sw_normal,
-  sw_receive,
-  sw_transmit
-};
 
 /*
  * GLOBAL
  */
-
-  // const
-const uint8_t LEN_MQ_CREDS  = 4;
-const uint8_t LEN_MAX_IP    = 16;
-const size_t BAUD_RATE      = 9600;
-const size_t REST           = 6000;
-const size_t TIMER_DIV      = 80;
-const size_t TIMER_TRSH     = 500000;
 
   // Wi-Fi
 const char* wlan_ssid;
@@ -98,19 +53,6 @@ hw_timer_t* timer_span;
   // NVM
 Preferences preferences;
 
-  // Credentials
-typedef struct {
-  size_t mqtt_port;
-  uint8_t* mqtt_broker;
-  char* mqtt_broker_str;
-  char* mqtt_user;
-  char* mqtt_pass;
-  char* wlan_psk;
-  char* wlan_ssid;
-  uint8_t len_wlan_psk;
-  uint8_t len_wlan_ssid;
-} Credentials_t;
-
 
 /*
  * FUNC
@@ -128,77 +70,6 @@ uint8_t check_if_preferences_has_keys(uint8_t, void*);
 void IRAM_ATTR ISR(void);
 void IRAM_ATTR on_alarm_cycle(void);
 void IRAM_ATTR on_alarm_span(void);
-
-
-bool get_preferences(Preferences& pref, Credentials_t& creds)
-{
-  pref.begin("miro_creds", true);
-  bool exist = check_if_preferences_has_keys(
-    6,
-    "mqtt_port",
-    "mqtt_broker",
-    "mqtt_user",
-    "mqtt_pass",
-    "wlan_psk",
-    "wlan_ssid");
-
-  if (exist)
-  {
-    creds.len_wlan_psk = pref.getUChar("len_psk");
-    creds.len_wlan_ssid = pref.getUChar("len_ssid");
-
-    creds.mqtt_broker = (uint8_t*)malloc(LEN_MQ_CREDS*sizeof(uint8_t));
-    creds.mqtt_broker_str = (char*)malloc((LEN_MAX_IP + 1)*sizeof(char));
-    creds.mqtt_user = (char*)malloc((LEN_MQ_CREDS + 1)*sizeof(char));
-    creds.mqtt_pass = (char*)malloc((LEN_MQ_CREDS + 1)*sizeof(char));
-    creds.wlan_psk = (char*)malloc((creds.len_wlan_psk)*sizeof(char));
-    creds.wlan_ssid = (char*)malloc((creds.len_wlan_ssid)*sizeof(char));
-
-    creds.mqtt_port = pref.getUShort("mqtt_port");
-    pref.getBytes("mqtt_broker", creds.mqtt_broker, LEN_MAX_IP/4);
-    parse_ip_to_string(creds.mqtt_broker_str, creds.mqtt_broker);
-    pref.getString("mqtt_user", creds.mqtt_user, LEN_MQ_CREDS + 1);
-    pref.getString("mqtt_pass", creds.mqtt_pass, LEN_MQ_CREDS + 1);
-    pref.getString("wlan_psk", creds.wlan_psk, creds.len_wlan_psk);
-    pref.getString("wlan_ssid", creds.wlan_ssid, creds.len_wlan_ssid);
-  }
-  
-  pref.end();
-
-  return(exist);
-}
-
-void set_preferences(Preferences& pref, Credentials_t& creds)
-{
-  pref.begin("miro_creds", false);
-
-  pref.putUChar("len_psk", creds.len_wlan_psk);
-  pref.putUChar("len_ssid", creds.len_wlan_ssid);
-  pref.putUShort("mqtt_port", creds.mqtt_port);
-  pref.putBytes("mqtt_broker", creds.mqtt_broker, LEN_MAX_IP/4);
-  pref.putString("mqtt_user", creds.mqtt_user);
-  pref.putString("mqtt_pass", creds.mqtt_pass);
-  pref.putString("wlan_psk", creds.wlan_psk);
-  pref.putString("wlan_ssid", creds.wlan_ssid);
-
-  pref.end();
-}
-
-void print_preferences(Credentials_t& creds)
-{
-  Serial.print("Port\t");
-  Serial.println(creds.mqtt_port);
-  Serial.print("Broker\t");
-  Serial.println(creds.mqtt_broker_str);
-  Serial.print("User\t");
-  Serial.println(creds.mqtt_user);
-  Serial.print("Pass\t");
-  Serial.println(creds.mqtt_pass);
-  Serial.print("Psk\t");
-  Serial.println(creds.wlan_psk);
-  Serial.print("Ssid\t");
-  Serial.println(creds.wlan_ssid);
-}
 
 /*
  * STATE 0, 1
@@ -218,7 +89,7 @@ void setup()
   bool exist = get_preferences(preferences, creds);
   Serial.print("Valid preferences found: ");
   Serial.println(exist);
-  
+
   print_preferences(creds);
 
     // WLAN
@@ -408,25 +279,6 @@ void on_message(const char* topic, byte* msg, uint8_t len)
   }
 
   free(buf);
-}
-
-  // HELPER
-void parse_ip_to_string(const char* dest, uint8_t* ip) {
-  snprintf((char*)dest, 16, "%d.%d.%d.%d\0", *(ip + 0), *(ip + 1), *(ip + 2), *(ip + 3));
-}
-
-uint8_t check_if_preferences_has_keys(uint8_t args_count, ...)
-{
-  va_list args;
-  uint8_t i;
-  uint8_t log_val = 1;
-  va_start(args, args_count);
-  for (i = 0; i < args_count; i++)
-  {
-    log_val &= preferences.isKey(va_arg(args, const char*));
-  }
-  va_end(args);
-  return(log_val);
 }
 
 /*
