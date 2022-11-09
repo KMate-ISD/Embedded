@@ -1,11 +1,11 @@
 /*
  #  STATE             TRIGGER
  0  Initialize        power on
- 1  Listen            Initialize phase ends while no credentials are saved / On board flash button released while in Normal operational state.
+ 1  Receive           Initialize phase ends while no credentials are saved / On board flash button released while in Normal operational state.
  2  Normal operation  Connection established
- 3  Transmit          On-board flash button released while in Listen state
+ 3  Transmit          On-board flash button released while in Receive state
  4  Reset             On-board flash button pressed and held for 5 seconds
- 5  Deep sleep        Listen phase ends while no credentials are saved
+ 5  Deep sleep        Receive phase ends while no credentials are saved
  */
 
 
@@ -39,9 +39,9 @@ const size_t TIMER_TRSH     = 500000;
 enum State
 {
   Initialize,
-  Listen,
   Normal_op,
   Transmit,
+  Receive,
   Reset,
   Deep_sleep,
   Undefined = 0xFF
@@ -50,8 +50,8 @@ enum State
 enum Switch_state
 {
   sw_normal,
-  sw_receive,
-  sw_transmit
+  sw_transmit,
+  sw_receive
 };
 
 

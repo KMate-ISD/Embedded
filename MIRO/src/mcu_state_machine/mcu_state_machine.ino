@@ -1,14 +1,3 @@
-/*
- #  STATE             TRIGGER
- 0  Initialize        power on
- 1  Listen            Initialize phase ends while no credentials are saved / On board flash button released while in Normal operational state.
- 2  Normal operation  Connection established
- 3  Transmit          On-board flash button released while in Listen state
- 4  Reset             On-board flash button pressed and held for 5 seconds
- 5  Deep sleep        Listen phase ends while no credentials are saved
- */
-
-
 #include <PubSubClient.h>
 #include <WiFi.h>
 #include "mcu_credentials_processor.h"
@@ -130,8 +119,8 @@ void setup()
     // Timer
   init_timer();
   
-  // [1] Listen
-  miro_state = Listen;
+  // [1] Continue with normal operation 
+  miro_state = Normal_op;
 }
 
 
@@ -144,24 +133,16 @@ void loop()
   // [2] Normal operation
   switch (miro_state)
   {
-    case Listen:
-      miro_state = Normal_op;
-      break;
-
     case Normal_op:
       if (!mqtt_client->connected()) { mqtt_reconnect(); }
       mqtt_client->loop();
 
-      td = millis();
-      if (td - t0 > REST*4)
-      {
-        t0 = td;
-        Serial.print("state ");
-        Serial.println(miro_state);
-      }
       break;
 
     case Transmit:
+      break;
+
+    case Receive:
       break;
 
     case Deep_sleep:
@@ -170,6 +151,14 @@ void loop()
     case Reset:
     default:
       ESP.restart();
+  }
+
+  td = millis();
+  if (td - t0 > REST*4)
+  {
+    t0 = td;
+    Serial.print("state ");
+    Serial.println(miro_state);
   }
 }
 
@@ -304,16 +293,17 @@ void IRAM_ATTR ISR()
     {
       if (switch_state%3 == sw_transmit)
       {
-        timer_divider = TIMER_DIV >> 3;
+        timer_divider = TIMER_DIV >> 1;
       }
       else
       {
-        timer_divider = TIMER_DIV >> 1;
+        timer_divider = TIMER_DIV >> 3;
       }
       timerSetDivider(timer_cycle, timer_divider);
       timerStart(timer_cycle);
     }
 
+    miro_state = switch_state%3 + 1;
     held = false;
   }
   else
@@ -333,8 +323,8 @@ void IRAM_ATTR on_alarm_cycle()
 
 void IRAM_ATTR on_alarm_span()
 {
-  digitalWrite(LED, led_state = LOW);
   timerStop(timer_span);
   timerRestart(timer_span);
+  digitalWrite(LED, led_state = LOW);
   miro_state = Reset;
 }
