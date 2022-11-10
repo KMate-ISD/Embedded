@@ -20,16 +20,16 @@ const char* mqtt_user;
 PubSubClient* mqtt_client;
 
   // Op.
-bool held                   = false;
-bool debug                  = true;
-uint8_t miro_state          = Undefined;
+bool held                   = false;            // Pushbutton is held
+bool debug                  = true;             // Display detailed info via Serial
+uint8_t miro_state          = Undefined;        // State of operation
 size_t t0                   = 0;
 size_t td;
 
   // Peripherals
 bool btn_state;
-bool led_state              = false;
-uint8_t switch_state        = sw_normal;
+bool led_state              = false;            // Status of on board LED
+uint8_t switch_state        = sw_normal;        // Toggle Normal op., Receive and Transmit states
 
   // Timer
 bool autoreload             = true;
@@ -56,15 +56,15 @@ uint8_t old_switch_state    = sw_normal;
  * FUNC
  */
 
-void init_wifi(void);
+void hard_reset(void);
 void init_mqtt(void);
 void init_timer(void);
+void init_wifi(void);
 void mqtt_reconnect(void);
-
 void on_message(const char*, byte*, uint8_t);
-void parse_ip_to_string(const char*, uint8_t*);
 void print_state(void);
-uint8_t check_if_preferences_has_keys(uint8_t, void*);
+void setup();
+void loop();
 
 void IRAM_ATTR ISR(void);
 void IRAM_ATTR on_alarm_cycle(void);
@@ -77,10 +77,11 @@ void IRAM_ATTR on_alarm_span(void);
 void setup()
 {
   // [0] Initialize
-    // Op.
-  miro_state = Initialize;
   Serial.begin(BAUD_RATE);
   DEBUG(Serial.println())
+
+    // Op.
+  miro_state = Initialize;
 
     // NVM;
   bool exist = proc.print_creds();
@@ -125,6 +126,8 @@ void setup()
 
 void loop()
 {
+  DEBUG(print_state())
+
   // [2] Normal operation
   switch (miro_state)
   {
@@ -145,17 +148,7 @@ void loop()
     
     case Reset:
     default:
-      Serial.println("\n-= HARD RESET =-\n");
-      DEBUG(print_state())
-
-      timerStop(timer_cycle);
-      timerRestart(timer_cycle);
-
-      timerStop(timer_span);
-      timerRestart(timer_span);
-
-      digitalWrite(LED, led_state = LOW);
-      ESP.restart();
+      hard_reset();
   }
 
   td = millis();
@@ -170,8 +163,6 @@ void loop()
   {
     digitalWrite(LED, old_led_state = led_state);
   }
-
-  DEBUG(print_state())
 }
 
 
@@ -179,7 +170,21 @@ void loop()
  * FUNC DEF
  */
 
-  // Initialize
+void hard_reset()
+{
+  Serial.println("\n-= HARD RESET =-\n");
+
+  timerStop(timer_cycle);
+  timerRestart(timer_cycle);
+
+  timerStop(timer_span);
+  timerRestart(timer_span);
+
+  digitalWrite(LED, led_state = LOW);
+  ESP.restart();
+}
+
+  // Network
 void init_wifi()
 {
   WiFi.mode(WIFI_STA);
@@ -202,22 +207,6 @@ void init_mqtt()
   mqtt_client->setCallback(on_message);
 }
 
-void init_timer()
-{
-  timer_cycle = timerBegin(TIMER0, timer_divider, timer_count_up);
-  timerAttachInterrupt(timer_cycle, &on_alarm_cycle, edge);
-  timerAlarmWrite(timer_cycle, alarm_treshold, autoreload);
-  timerAlarmEnable(timer_cycle);
-  timerStop(timer_cycle);
-
-  timer_span = timerBegin(TIMER1, timer_divider*5, timer_count_up);
-  timerAttachInterrupt(timer_span, &on_alarm_span, edge);
-  timerAlarmWrite(timer_span, alarm_treshold, autoreload);
-  timerAlarmEnable(timer_span);
-  timerStop(timer_span);
-}
-
-  // MQTT
 void mqtt_reconnect()
 {
   while (!mqtt_client->connected())
@@ -240,6 +229,7 @@ void mqtt_reconnect()
   }
 }
 
+  // Callback
 void on_message(const char* topic, byte* msg, uint8_t len)
 {
   Serial.print(topic);
@@ -313,6 +303,21 @@ void print_state()
 /*
  * ISR
  */
+
+void init_timer()
+{
+  timer_cycle = timerBegin(TIMER0, timer_divider, timer_count_up);
+  timerAttachInterrupt(timer_cycle, &on_alarm_cycle, edge);
+  timerAlarmWrite(timer_cycle, alarm_treshold, autoreload);
+  timerAlarmEnable(timer_cycle);
+  timerStop(timer_cycle);
+
+  timer_span = timerBegin(TIMER1, timer_divider*5, timer_count_up);
+  timerAttachInterrupt(timer_span, &on_alarm_span, edge);
+  timerAlarmWrite(timer_span, alarm_treshold, autoreload);
+  timerAlarmEnable(timer_span);
+  timerStop(timer_span);
+}
 
 void IRAM_ATTR ISR()
 {
