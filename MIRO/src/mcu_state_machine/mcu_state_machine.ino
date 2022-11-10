@@ -197,8 +197,6 @@ void loop()
       timerStop(timer_span);
       timerRestart(timer_span);
 
-      held = false;
-
       digitalWrite(LED, led_state = LOW);
       ESP.restart();
   }
@@ -361,8 +359,6 @@ void IRAM_ATTR ISR()
 
     timerStop(timer_span);
 
-    // timerStop(timer_cycle);
-    // timerRestart(timer_cycle);
     if (switch_state%3 != sw_normal)
     {
       if (switch_state%3 == sw_transmit)
@@ -385,8 +381,6 @@ void IRAM_ATTR ISR()
   {
     timerStop(timer_cycle);
 
-    // timerStop(timer_span);
-    // timerRestart(timer_span);
     timerRestart(timer_span);
     timerStart(timer_span);
 
@@ -402,7 +396,5 @@ void IRAM_ATTR on_alarm_cycle()
 
 void IRAM_ATTR on_alarm_span()
 {
-  // held = false;
-  led_state = LOW;
   miro_state = Reset;
 }
