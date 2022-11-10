@@ -95,14 +95,25 @@ void setup()
   parse_ip_to_string(mqtt_broker, mqtt_broker_bytes);
   init_mqtt();
 
-  creds.len_wlan_psk = 13 + 1;
-  creds.len_wlan_ssid = 14 + 1;
-  creds.mqtt_port = mqtt_port;
-  memcpy(creds.mqtt_broker, mqtt_broker_bytes, LEN_MAX_IP/4);
-  memcpy(creds.mqtt_user, mqtt_user, LEN_MQ_CREDS + 1);
-  memcpy(creds.mqtt_pass, mqtt_pass, LEN_MQ_CREDS + 1);
-  memcpy(creds.wlan_psk, wlan_psk, creds.len_wlan_psk);
-  memcpy(creds.wlan_ssid, wlan_ssid, creds.len_wlan_ssid);
+  if (!exist)
+  {
+    creds.len_wlan_psk = 13 + 1;
+    creds.len_wlan_ssid = 14 + 1;
+
+    creds.mqtt_broker = (uint8_t*)malloc(LEN_MQ_CREDS*sizeof(uint8_t));
+    creds.mqtt_broker_str = (char*)malloc((LEN_MAX_IP + 1)*sizeof(char));
+    creds.mqtt_user = (char*)malloc((LEN_MQ_CREDS + 1)*sizeof(char));
+    creds.mqtt_pass = (char*)malloc((LEN_MQ_CREDS + 1)*sizeof(char));
+    creds.wlan_psk = (char*)malloc((creds.len_wlan_psk)*sizeof(char));
+    creds.wlan_ssid = (char*)malloc((creds.len_wlan_ssid)*sizeof(char));
+
+    creds.mqtt_port = mqtt_port;
+    memcpy(creds.mqtt_broker, mqtt_broker_bytes, LEN_MAX_IP/4);
+    memcpy(creds.mqtt_user, mqtt_user, LEN_MQ_CREDS + 1);
+    memcpy(creds.mqtt_pass, mqtt_pass, LEN_MQ_CREDS + 1);
+    memcpy(creds.wlan_psk, wlan_psk, creds.len_wlan_psk);
+    memcpy(creds.wlan_ssid, wlan_ssid, creds.len_wlan_ssid);
+  }
   
     // Creds
   if (!exist)
@@ -113,7 +124,7 @@ void setup()
 
     // Peripherals
   pinMode(LED, OUTPUT);
-  pinMode(BTN, INPUT);
+  pinMode(BTN, INPUT_PULLUP);
   attachInterrupt(BTN, ISR, CHANGE);
 
     // Timer
@@ -127,6 +138,12 @@ void setup()
 /*
  * STATE 2, 3, 4, 5
  */
+
+bool old_btn_state = digitalRead(BTN);
+bool old_held = held;
+bool old_led_state = led_state;
+uint8_t old_state = miro_state;
+uint8_t old_switch_state = switch_state; 
 
 void loop()
 {
@@ -153,13 +170,40 @@ void loop()
       ESP.restart();
   }
 
-  td = millis();
-  if (td - t0 > REST*4)
+  // td = millis();
+  // if (td - t0 > REST/100)
+  // {
+  //   t0 = td;
+  // }
+  if (old_led_state != led_state)
   {
-    t0 = td;
-    Serial.print("state ");
-    Serial.println(miro_state);
+    digitalWrite(LED, led_state);
+    old_led_state = led_state;
   }
+
+  DEBUG(
+    bool btn_state = digitalRead(BTN);
+    if (
+      old_state != miro_state
+      || old_held != held
+      || old_switch_state%3 != switch_state%3
+      || old_btn_state != btn_state)
+    {
+      Serial.print("\nBTN ");
+      Serial.println(btn_state);
+      Serial.print("state ");
+      Serial.println(miro_state);
+      Serial.print("held ");
+      Serial.println(held);
+      Serial.print("switch ");
+      Serial.println(switch_state%3);
+
+      old_state = miro_state;
+      old_held = held;
+      old_switch_state = switch_state;
+      old_btn_state = btn_state;
+    }
+  )
 }
 
 
@@ -200,7 +244,7 @@ void init_timer()
   timerAlarmEnable(timer_cycle);
   timerStop(timer_cycle);
 
-  timer_span = timerBegin(TIMER1, timer_divider*5, timer_count_up);
+  timer_span = timerBegin(TIMER1, timer_divider*6, timer_count_up);
   timerAttachInterrupt(timer_span, &on_alarm_span, edge);
   timerAlarmWrite(timer_span, alarm_treshold, autoreload);
   timerAlarmEnable(timer_span);
@@ -282,13 +326,12 @@ void IRAM_ATTR ISR()
   }
   else if (held)
   {
-    timerStop(timer_span);
-    timerRestart(timer_span);
+    held = false;
     switch_state++;
-    digitalWrite(LED, led_state = LOW);
-
     timerStop(timer_cycle);
     timerRestart(timer_cycle);
+    led_state = LOW;
+
     if (switch_state%3 != sw_normal)
     {
       if (switch_state%3 == sw_transmit)
@@ -303,28 +346,38 @@ void IRAM_ATTR ISR()
       timerStart(timer_cycle);
     }
 
+    timerStop(timer_span);
+    timerRestart(timer_span);
     miro_state = switch_state%3 + 1;
-    held = false;
   }
   else
   {
     timerStop(timer_cycle);
     timerRestart(timer_cycle);
     timerStart(timer_span);
-    digitalWrite(LED, led_state = HIGH);
+    led_state = HIGH;
     held = true;
   }
 }
 
 void IRAM_ATTR on_alarm_cycle()
 {
-  if (switch_state) { digitalWrite(LED, led_state = !led_state); }
+  if (switch_state) { led_state = !led_state; }
 }
 
 void IRAM_ATTR on_alarm_span()
 {
+  // mby check gpio 0 before to fuck up the rare bug
   timerStop(timer_span);
   timerRestart(timer_span);
-  digitalWrite(LED, led_state = LOW);
-  miro_state = Reset;
+  led_state = LOW;
+  if (!digitalRead(BTN))
+  {
+    miro_state = Reset; 
+  }
+  else
+  {
+    held = false;
+    ISR();
+  }
 }
