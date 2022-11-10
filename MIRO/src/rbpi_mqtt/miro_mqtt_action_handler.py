@@ -22,9 +22,9 @@ class Miro_mqtt_action_handler(Miro_mqtt_client_handler):
 
         pw = list()
         for i in range(i):
-            r = random.randint(48, 122)
-            while (r < 65 and r > 57) or (r < 97 and r > 90):
-                r = random.randint(48, 122)
+            r = random.randint(33, 126)
+            while (r < 65 and r > 57):
+                r = random.randint(33, 126)
             pw.append(chr(r))
 
         return(user, ''.join(pw))
