@@ -70,12 +70,24 @@ void IRAM_ATTR ISR(void);
 void IRAM_ATTR on_alarm_cycle(void);
 void IRAM_ATTR on_alarm_span(void);
 
+
 /*
  * STATE 0, 1
  */
 
 void setup()
 {
+#if 1
+  wlan_ssid   = "Telekom-B4Wf5Y";
+  wlan_psk    = "PIcSafaSZ_+9*";
+  mqtt_port   = 1883;
+  mqtt_user   = "user";
+  mqtt_pass   = "pass";
+  mqtt_broker = (const char*)malloc(LEN_MAX_IP*sizeof(char));
+  uint8_t mqtt_broker_bytes[4] = {192, 168, 1, 85};
+  parse_ip_to_string(mqtt_broker, mqtt_broker_bytes);
+#endif
+
   // [0] Initialize
   Serial.begin(BAUD_RATE);
   DEBUG(Serial.println())
@@ -87,24 +99,17 @@ void setup()
   bool exist = proc.print_creds();
 
     // WLAN
-  wlan_ssid   = "Telekom-B4Wf5Y";
-  wlan_psk    = "PIcSafaSZ_+9*";
   init_wifi();
 
     // MQTT
-  mqtt_port   = 1883;
-  mqtt_user   = "user";
-  mqtt_pass   = "pass";
-  mqtt_broker = (const char*)malloc(LEN_MAX_IP*sizeof(char));
-  uint8_t mqtt_broker_bytes[LEN_MAX_IP/4] = {192, 168, 1, 85};
-  parse_ip_to_string(mqtt_broker, mqtt_broker_bytes);
   init_mqtt();
 
   if (!exist)
   {
     proc.set_mqtt_server(mqtt_broker_bytes, mqtt_port);
     proc.set_mqtt_creds((char*)mqtt_user, (char*)mqtt_pass);
-    proc.set_wifi_creds((char*)wlan_ssid, 15, (char*)wlan_psk, 14);
+    proc.set_wifi_creds((char*)wlan_ssid, 14, (char*)wlan_psk, 13);
+    proc.save_preferences();
   }
 
     // Peripherals
@@ -172,13 +177,17 @@ void loop()
 
 void hard_reset()
 {
-  Serial.println("\n-= HARD RESET =-\n");
+  Serial.println("\n:: HARD RESET ::\n");
 
   timerStop(timer_cycle);
   timerRestart(timer_cycle);
 
   timerStop(timer_span);
   timerRestart(timer_span);
+
+  proc.preferences.begin("miro_creds", RW_MODE);
+  proc.preferences.clear();
+  proc.preferences.end();
 
   digitalWrite(LED, led_state = LOW);
   ESP.restart();
@@ -248,13 +257,19 @@ void on_message(const char* topic, byte* msg, uint8_t len)
 
   if (!strcmp(topic, "admin/debug"))
   {
-    if(!strcmp(buf, "DEBUG"))
+    if (!strcmp(buf, "DEBUG"))
     {
       debug = !debug;
       Serial.print("Debug mode: ");
       Serial.println(debug);
     }
-    timerSetDivider(timer_cycle, timer_divider);
+    else if (debug && !strcmp(buf, "NVMCLEAR"))
+    {
+      proc.preferences.begin("miro_creds", RW_MODE);
+      proc.preferences.clear();
+      proc.preferences.end();
+      Serial.println("Preferences cleared.");
+    }
   }
 
   free(buf);

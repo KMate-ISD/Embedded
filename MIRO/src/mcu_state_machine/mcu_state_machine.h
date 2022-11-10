@@ -22,6 +22,8 @@
 #define RF_SS                 21
 #define TIMER0                0
 #define TIMER1                1
+#define RW_MODE               false
+#define RO_MODE               true
 
 #define DEBUG(a)              if (debug) { a; }
 

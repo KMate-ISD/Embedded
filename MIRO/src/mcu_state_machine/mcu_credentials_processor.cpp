@@ -61,14 +61,14 @@ void Credentials_processor::set_mqtt_creds(char* mqtt_user, char* mqtt_pass)
 
 void Credentials_processor::set_wifi_creds(char* wlan_ssid, uint8_t len_wlan_ssid, char* wlan_psk, uint8_t len_wlan_psk)
 {
-  alloc_wifi_creds(this->len_wlan_ssid, this->len_wlan_psk);
+  alloc_wifi_creds(len_wlan_ssid, len_wlan_psk);
   memcpy(this->wlan_ssid, wlan_ssid, this->len_wlan_ssid);
   memcpy(this->wlan_psk, wlan_psk, this->len_wlan_psk);
 }
 
 bool Credentials_processor::load_preferences()
 {
-  this->preferences.begin("miro_creds", true);
+  this->preferences.begin("miro_creds", RO_MODE);
   bool exist = this->check_if_preferences_has_keys(6,
     "mqtt_port",
     "mqtt_broker",
@@ -85,17 +85,14 @@ bool Credentials_processor::load_preferences()
     this->preferences.getBytes("mqtt_broker", this->mqtt_broker, 4);
     this->preferences.getString("mqtt_user", this->mqtt_user, LEN_MQ_CREDS + 1);
     this->preferences.getString("mqtt_pass", this->mqtt_pass, LEN_MQ_CREDS + 1);
-    this->preferences.getString("wlan_psk", this->wlan_psk, this->len_wlan_psk);
-    this->preferences.getString("wlan_ssid", this->wlan_ssid, this->len_wlan_ssid);
+    this->preferences.getString("wlan_psk", this->wlan_psk, this->len_wlan_psk + 1);
+    this->preferences.getString("wlan_ssid", this->wlan_ssid, this->len_wlan_ssid + 1);
 
     Serial.println("Preferences loaded.");
-
-    Serial.print("debug port exist ");
-    Serial.println(this->preferences.getUShort("mqtt_port"));
   }
   else
   {
-    Serial.println("No this->preferences to load.");
+    Serial.println("No preferences to load.");
   }
   
   this->preferences.end();
@@ -105,7 +102,7 @@ bool Credentials_processor::load_preferences()
 
 void Credentials_processor::save_preferences()
 {
-  this->preferences.begin("miro_creds", false);
+  this->preferences.begin("miro_creds", RW_MODE);
 
   this->preferences.putUChar("len_psk", this->len_wlan_psk);
   this->preferences.putUChar("len_ssid", this->len_wlan_ssid);
