@@ -27,6 +27,7 @@ size_t t0                   = 0;
 size_t td;
 
   // Peripherals
+bool btn_state;
 bool led_state              = false;
 uint8_t switch_state        = sw_normal;
 
@@ -41,6 +42,13 @@ hw_timer_t* timer_span;
 
   // NVM
 Preferences preferences;
+
+  // Debug
+bool old_btn_state          = LOW;
+bool old_held               = false;
+bool old_led_state          = false;
+uint8_t old_miro_state      = Undefined;
+uint8_t old_switch_state    = sw_normal;
 
 
 /*
@@ -150,6 +158,48 @@ void loop()
     
     case Reset:
     default:
+      Serial.println("RESET");
+      DEBUG(
+        btn_state = digitalRead(BTN);
+        if (
+          old_btn_state != btn_state
+          || old_held != held
+          || old_miro_state != miro_state
+          || old_switch_state != switch_state)
+        {
+          Serial.print("\ngpio0 ");
+          Serial.println(btn_state);
+          Serial.print("held ");
+          Serial.println(held);
+          Serial.print("state ");
+          Serial.println(miro_state);
+          Serial.print("switch ");
+          Serial.println(switch_state%3);
+
+          Serial.print("timer_cycle started ");
+          Serial.print(timerStarted(timer_cycle));
+          Serial.print("\t");
+          Serial.print(timerRead(timer_cycle));
+          Serial.print("timer span started ");
+          Serial.print(timerStarted(timer_span));
+          Serial.print("\t");
+          Serial.print(timerRead(timer_span));
+
+          old_btn_state = btn_state;
+          old_held = held;
+          old_miro_state = miro_state;
+          old_switch_state = switch_state;
+        }
+      )
+      timerStop(timer_cycle);
+      timerRestart(timer_cycle);
+
+      timerStop(timer_span);
+      timerRestart(timer_span);
+
+      held = false;
+
+      digitalWrite(LED, led_state = LOW);
       ESP.restart();
   }
 
@@ -157,9 +207,49 @@ void loop()
   if (td - t0 > REST*4)
   {
     t0 = td;
-    Serial.print("state ");
+    Serial.print("\nstate ");
     Serial.println(miro_state);
   }
+
+  if (led_state != old_led_state)
+  {
+    digitalWrite(LED, old_led_state = led_state);
+  }
+
+  DEBUG(
+    btn_state = digitalRead(BTN);
+    if (
+      old_btn_state != btn_state
+      || old_held != held
+      || old_miro_state != miro_state
+      || old_switch_state != switch_state)
+    {
+      Serial.print("\ngpio0\t");
+      Serial.println(btn_state);
+      Serial.print("held\t");
+      Serial.println(held);
+      Serial.print("state\t");
+      Serial.println(miro_state);
+      Serial.print("switch\t");
+      Serial.println(switch_state%3);
+
+      Serial.print("\ntimer_cycle started\t");
+      Serial.print(timerStarted(timer_cycle));
+      Serial.print("\t");
+      Serial.println(timerRead(timer_cycle));
+      Serial.print("timer span started\t");
+      Serial.print(timerStarted(timer_span));
+      Serial.print("\t");
+      Serial.println(timerRead(timer_span));
+
+      old_btn_state = btn_state;
+      old_held = held;
+      old_miro_state = miro_state;
+      old_switch_state = switch_state;
+
+      Serial.println();
+    }
+  )
 }
 
 
@@ -173,16 +263,14 @@ void init_wifi()
   WiFi.mode(WIFI_STA);
   WiFi.begin(wlan_ssid, wlan_psk);
   
-  DEBUG(Serial.print("Connecting to Wi-Fi.."))
-  
+  Serial.print("Connecting to Wi-Fi..");
   while (WiFi.status() != WL_CONNECTED)
   {
-    DEBUG(Serial.print('.'))
+    Serial.print('.');
     delay(REST/6);
   }
-  DEBUG(Serial.print(' '))
-  
-  DEBUG(Serial.println(WiFi.localIP()))
+  Serial.print(' ');
+  Serial.println(WiFi.localIP());
 }
 
 void init_mqtt()
@@ -212,22 +300,20 @@ void mqtt_reconnect()
 {
   while (!mqtt_client->connected())
   {
-    DEBUG(Serial.print("Reconnecting to MQTT broker... "))
+    Serial.print("Reconnecting to MQTT broker... ");
     
     if (mqtt_client->connect("ESP32Client", mqtt_user, mqtt_pass))
     {
-      DEBUG(Serial.println("connected."))
+      Serial.println("connected.");
       mqtt_client->subscribe("admin/debug");
     }
     else
     {
-      DEBUG(
-        Serial.print("failed. rc=");
-        Serial.println(mqtt_client->state());
-        Serial.print("Retry in ");
-        Serial.print(REST/1000);
-        Serial.println(" seconds."))
-      delay(REST);
+      Serial.print("failed. rc=");
+      Serial.println(mqtt_client->state());
+      Serial.print("Retry in ");
+      Serial.print(REST/1000);
+      Serial.println(" seconds.");
     }
   }
 }
@@ -250,15 +336,7 @@ void on_message(const char* topic, byte* msg, uint8_t len)
 
   if (!strcmp(topic, "admin/debug"))
   {
-    if(!strcmp(buf, "DOUBLE"))
-    {
-      timer_divider >>= 1;
-    }
-    else if(!strcmp(buf, "HALVE"))
-    {
-      timer_divider <<= 1;
-    }
-    else if(!strcmp(buf, "DEBUG"))
+    if(!strcmp(buf, "DEBUG"))
     {
       debug = !debug;
       Serial.print("Debug mode: ");
