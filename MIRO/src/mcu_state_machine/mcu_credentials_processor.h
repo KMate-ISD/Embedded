@@ -3,21 +3,52 @@
 #include "mcu_state_machine.h"
 
 
-  // Credentials
-typedef struct {
-  size_t mqtt_port;
-  uint8_t* mqtt_broker;
-  char* mqtt_broker_str;
-  char* mqtt_user;
-  char* mqtt_pass;
-  char* wlan_psk;
-  char* wlan_ssid;
-  uint8_t len_wlan_psk;
-  uint8_t len_wlan_ssid;
-} Credentials_t;
+class Credentials_processor
+{
+  public:
+    uint16_t mqtt_port;
+    uint8_t* mqtt_broker;
+    char* mqtt_user;
+    char* mqtt_pass;
 
-  // Credential handling
-uint8_t check_if_preferences_has_keys(Preferences& pref, uint8_t args_count, ...)
+    uint8_t len_wlan_psk;
+    uint8_t len_wlan_ssid;
+    char* wlan_psk;
+    char* wlan_ssid;
+
+    Preferences preferences;
+
+    Credentials_processor(Preferences& preferences);
+    ~Credentials_processor();
+    
+    uint8_t check_if_preferences_has_keys(uint8_t args_count, ...);
+    void alloc_mqtt_creds();
+    void alloc_wifi_creds(uint8_t, uint8_t);
+    void set_mqtt_server(uint8_t*, uint16_t);
+    void set_mqtt_creds(char*, char*);
+    void set_wifi_creds(char*, uint8_t, char*, uint8_t);
+    bool load_preferences(void);
+    void save_preferences(void);
+    bool print_creds(void);
+};
+
+
+Credentials_processor::Credentials_processor(Preferences& preferences)
+  : preferences { preferences }
+{
+  this->alloc_mqtt_creds();
+}
+
+Credentials_processor::~Credentials_processor()
+{
+  if (this->len_wlan_ssid) { delete[] this->wlan_ssid; }
+  if (this->len_wlan_psk) { delete[] this->wlan_psk; }
+  delete[] this->mqtt_broker;
+  delete[] this->mqtt_user;
+  delete[] this->mqtt_pass;
+}
+
+uint8_t Credentials_processor::check_if_preferences_has_keys(uint8_t args_count, ...)
 {
   va_list args;
   uint8_t i;
@@ -25,16 +56,52 @@ uint8_t check_if_preferences_has_keys(Preferences& pref, uint8_t args_count, ...
   va_start(args, args_count);
   for (i = 0; i < args_count; i++)
   {
-    log_val &= pref.isKey(va_arg(args, const char*));
+    log_val &= preferences.isKey(va_arg(args, const char*));
   }
   va_end(args);
   return(log_val);
 }
 
-bool get_preferences(Preferences& pref, Credentials_t& creds)
+void Credentials_processor::alloc_mqtt_creds()
 {
-  pref.begin("miro_creds", true);
-  bool exist = check_if_preferences_has_keys(pref, 6,
+  this->mqtt_broker = new uint8_t[4];
+  this->mqtt_user = new char[LEN_MQ_CREDS + 1]();
+  this->mqtt_pass = new char[LEN_MQ_CREDS + 1]();
+}
+
+void Credentials_processor::alloc_wifi_creds(uint8_t len_wlan_ssid, uint8_t len_wlan_psk)
+{
+  if (this->len_wlan_ssid) { delete[] this->wlan_ssid; }
+  if (this->len_wlan_psk) { delete[] this->wlan_psk; }
+  this->len_wlan_ssid = len_wlan_ssid;
+  this->len_wlan_psk = len_wlan_psk;
+  this->wlan_ssid = new char[this->len_wlan_ssid + 1]();
+  this->wlan_psk = new char[this->len_wlan_psk + 1]();
+}
+
+void Credentials_processor::set_mqtt_server(uint8_t* mqtt_broker_bytes, uint16_t mqtt_port)
+{
+  memcpy(this->mqtt_broker, mqtt_broker_bytes, 4);
+  this->mqtt_port = mqtt_port;
+}
+
+void Credentials_processor::set_mqtt_creds(char* mqtt_user, char* mqtt_pass)
+{
+  memcpy(this->mqtt_user, mqtt_user, LEN_MQ_CREDS);
+  memcpy(this->mqtt_pass, mqtt_pass, LEN_MQ_CREDS);
+}
+
+void Credentials_processor::set_wifi_creds(char* wlan_ssid, uint8_t len_wlan_ssid, char* wlan_psk, uint8_t len_wlan_psk)
+{
+  alloc_wifi_creds(this->len_wlan_ssid, this->len_wlan_psk);
+  memcpy(this->wlan_ssid, wlan_ssid, this->len_wlan_ssid);
+  memcpy(this->wlan_psk, wlan_psk, this->len_wlan_psk);
+}
+
+bool Credentials_processor::load_preferences()
+{
+  this->preferences.begin("miro_creds", true);
+  bool exist = this->check_if_preferences_has_keys(6,
     "mqtt_port",
     "mqtt_broker",
     "mqtt_user",
@@ -44,58 +111,72 @@ bool get_preferences(Preferences& pref, Credentials_t& creds)
 
   if (exist)
   {
-    creds.len_wlan_psk = pref.getUChar("len_psk");
-    creds.len_wlan_ssid = pref.getUChar("len_ssid");
+    this->alloc_wifi_creds(this->preferences.getUChar("len_ssid"), this->preferences.getUChar("len_psk"));
 
-    creds.mqtt_broker = (uint8_t*)malloc(LEN_MQ_CREDS*sizeof(uint8_t));
-    creds.mqtt_broker_str = (char*)malloc((LEN_MAX_IP + 1)*sizeof(char));
-    creds.mqtt_user = (char*)malloc((LEN_MQ_CREDS + 1)*sizeof(char));
-    creds.mqtt_pass = (char*)malloc((LEN_MQ_CREDS + 1)*sizeof(char));
-    creds.wlan_psk = (char*)malloc((creds.len_wlan_psk)*sizeof(char));
-    creds.wlan_ssid = (char*)malloc((creds.len_wlan_ssid)*sizeof(char));
+    this->mqtt_port = this->preferences.getUShort("mqtt_port");
+    this->preferences.getBytes("mqtt_broker", this->mqtt_broker, 4);
+    this->preferences.getString("mqtt_user", this->mqtt_user, LEN_MQ_CREDS + 1);
+    this->preferences.getString("mqtt_pass", this->mqtt_pass, LEN_MQ_CREDS + 1);
+    this->preferences.getString("wlan_psk", this->wlan_psk, this->len_wlan_psk);
+    this->preferences.getString("wlan_ssid", this->wlan_ssid, this->len_wlan_ssid);
 
-    creds.mqtt_port = pref.getUShort("mqtt_port");
-    pref.getBytes("mqtt_broker", creds.mqtt_broker, LEN_MAX_IP/4);
-    parse_ip_to_string(creds.mqtt_broker_str, creds.mqtt_broker);
-    pref.getString("mqtt_user", creds.mqtt_user, LEN_MQ_CREDS + 1);
-    pref.getString("mqtt_pass", creds.mqtt_pass, LEN_MQ_CREDS + 1);
-    pref.getString("wlan_psk", creds.wlan_psk, creds.len_wlan_psk);
-    pref.getString("wlan_ssid", creds.wlan_ssid, creds.len_wlan_ssid);
+    Serial.println("Preferences loaded.");
+
+    Serial.print("debug port exist ");
+    Serial.println(this->preferences.getUShort("mqtt_port"));
+  }
+  else
+  {
+    Serial.println("No this->preferences to load.");
   }
   
-  pref.end();
+  this->preferences.end();
 
   return(exist);
 }
 
-void set_preferences(Preferences& pref, Credentials_t& creds)
+void Credentials_processor::save_preferences()
 {
-  pref.begin("miro_creds", false);
+  this->preferences.begin("miro_creds", false);
 
-  pref.putUChar("len_psk", creds.len_wlan_psk);
-  pref.putUChar("len_ssid", creds.len_wlan_ssid);
-  pref.putUShort("mqtt_port", creds.mqtt_port);
-  pref.putBytes("mqtt_broker", creds.mqtt_broker, LEN_MAX_IP/4);
-  pref.putString("mqtt_user", creds.mqtt_user);
-  pref.putString("mqtt_pass", creds.mqtt_pass);
-  pref.putString("wlan_psk", creds.wlan_psk);
-  pref.putString("wlan_ssid", creds.wlan_ssid);
+  this->preferences.putUChar("len_psk", this->len_wlan_psk);
+  this->preferences.putUChar("len_ssid", this->len_wlan_ssid);
+  this->preferences.putUShort("mqtt_port", this->mqtt_port);
+  this->preferences.putBytes("mqtt_broker", this->mqtt_broker, 4);
+  this->preferences.putString("mqtt_user", this->mqtt_user);
+  this->preferences.putString("mqtt_pass", this->mqtt_pass);
+  this->preferences.putString("wlan_psk", this->wlan_psk);
+  this->preferences.putString("wlan_ssid", this->wlan_ssid);
 
-  pref.end();
+  this->preferences.end();
+
+  Serial.println("Preferences saved to NVS.");
 }
 
-void print_preferences(Credentials_t& creds)
+bool Credentials_processor::print_creds()
 {
-  Serial.print("Port\t");
-  Serial.println(creds.mqtt_port);
-  Serial.print("Broker\t");
-  Serial.println(creds.mqtt_broker_str);
-  Serial.print("User\t");
-  Serial.println(creds.mqtt_user);
-  Serial.print("Pass\t");
-  Serial.println(creds.mqtt_pass);
-  Serial.print("Psk\t");
-  Serial.println(creds.wlan_psk);
-  Serial.print("Ssid\t");
-  Serial.println(creds.wlan_ssid);
+  bool exist = this->load_preferences();
+
+  if (exist)
+  {
+    char* ip_str = new char[16]();
+    parse_ip_to_string(ip_str, this->mqtt_broker);
+
+    Serial.print("Port\t");
+    Serial.println(this->mqtt_port);
+    Serial.print("Broker\t");
+    Serial.println(ip_str);
+    Serial.print("User\t");
+    Serial.println(this->mqtt_user);
+    Serial.print("Pass\t");
+    Serial.println(this->mqtt_pass);
+    Serial.print("Psk\t");
+    Serial.println(this->wlan_psk);
+    Serial.print("Ssid\t");
+    Serial.println(this->wlan_ssid);
+
+    delete[] ip_str;
+  }
+
+  return(exist);
 }

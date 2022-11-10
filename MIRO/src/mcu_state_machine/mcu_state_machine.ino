@@ -42,6 +42,7 @@ hw_timer_t* timer_span;
 
   // NVM
 Preferences preferences;
+Credentials_processor proc(preferences);
 
   // Debug
 bool old_btn_state          = LOW;
@@ -62,6 +63,7 @@ void mqtt_reconnect(void);
 
 void on_message(const char*, byte*, uint8_t);
 void parse_ip_to_string(const char*, uint8_t*);
+void print_state(void);
 uint8_t check_if_preferences_has_keys(uint8_t, void*);
 
 void IRAM_ATTR ISR(void);
@@ -80,14 +82,8 @@ void setup()
   Serial.begin(BAUD_RATE);
   DEBUG(Serial.println())
 
-    // NVM
-  Credentials_t creds;
-
-  bool exist = get_preferences(preferences, creds);
-  Serial.print("Valid preferences found: ");
-  Serial.println(exist);
-
-  print_preferences(creds);
+    // NVM;
+  bool exist = proc.print_creds();
 
     // WLAN
   wlan_ssid   = "Telekom-B4Wf5Y";
@@ -103,20 +99,11 @@ void setup()
   parse_ip_to_string(mqtt_broker, mqtt_broker_bytes);
   init_mqtt();
 
-  creds.len_wlan_psk = 13 + 1;
-  creds.len_wlan_ssid = 14 + 1;
-  creds.mqtt_port = mqtt_port;
-  memcpy(creds.mqtt_broker, mqtt_broker_bytes, LEN_MAX_IP/4);
-  memcpy(creds.mqtt_user, mqtt_user, LEN_MQ_CREDS + 1);
-  memcpy(creds.mqtt_pass, mqtt_pass, LEN_MQ_CREDS + 1);
-  memcpy(creds.wlan_psk, wlan_psk, creds.len_wlan_psk);
-  memcpy(creds.wlan_ssid, wlan_ssid, creds.len_wlan_ssid);
-  
-    // Creds
   if (!exist)
   {
-    set_preferences(preferences, creds);
-    Serial.println("Preferences set.");
+    proc.set_mqtt_server(mqtt_broker_bytes, mqtt_port);
+    proc.set_mqtt_creds((char*)mqtt_user, (char*)mqtt_pass);
+    proc.set_wifi_creds((char*)wlan_ssid, 15, (char*)wlan_psk, 14);
   }
 
     // Peripherals
@@ -158,39 +145,9 @@ void loop()
     
     case Reset:
     default:
-      Serial.println("RESET");
-      DEBUG(
-        btn_state = digitalRead(BTN);
-        if (
-          old_btn_state != btn_state
-          || old_held != held
-          || old_miro_state != miro_state
-          || old_switch_state != switch_state)
-        {
-          Serial.print("\ngpio0 ");
-          Serial.println(btn_state);
-          Serial.print("held ");
-          Serial.println(held);
-          Serial.print("state ");
-          Serial.println(miro_state);
-          Serial.print("switch ");
-          Serial.println(switch_state%3);
+      Serial.println("\n-= HARD RESET =-\n");
+      DEBUG(print_state())
 
-          Serial.print("timer_cycle started ");
-          Serial.print(timerStarted(timer_cycle));
-          Serial.print("\t");
-          Serial.print(timerRead(timer_cycle));
-          Serial.print("timer span started ");
-          Serial.print(timerStarted(timer_span));
-          Serial.print("\t");
-          Serial.print(timerRead(timer_span));
-
-          old_btn_state = btn_state;
-          old_held = held;
-          old_miro_state = miro_state;
-          old_switch_state = switch_state;
-        }
-      )
       timerStop(timer_cycle);
       timerRestart(timer_cycle);
 
@@ -214,40 +171,7 @@ void loop()
     digitalWrite(LED, old_led_state = led_state);
   }
 
-  DEBUG(
-    btn_state = digitalRead(BTN);
-    if (
-      old_btn_state != btn_state
-      || old_held != held
-      || old_miro_state != miro_state
-      || old_switch_state != switch_state)
-    {
-      Serial.print("\ngpio0\t");
-      Serial.println(btn_state);
-      Serial.print("held\t");
-      Serial.println(held);
-      Serial.print("state\t");
-      Serial.println(miro_state);
-      Serial.print("switch\t");
-      Serial.println(switch_state%3);
-
-      Serial.print("\ntimer_cycle started\t");
-      Serial.print(timerStarted(timer_cycle));
-      Serial.print("\t");
-      Serial.println(timerRead(timer_cycle));
-      Serial.print("timer span started\t");
-      Serial.print(timerStarted(timer_span));
-      Serial.print("\t");
-      Serial.println(timerRead(timer_span));
-
-      old_btn_state = btn_state;
-      old_held = held;
-      old_miro_state = miro_state;
-      old_switch_state = switch_state;
-
-      Serial.println();
-    }
-  )
+  DEBUG(print_state())
 }
 
 
@@ -345,6 +269,46 @@ void on_message(const char* topic, byte* msg, uint8_t len)
 
   free(buf);
 }
+
+  // Debug
+void print_state()
+{
+  btn_state = digitalRead(BTN);
+  if (
+    old_btn_state != btn_state
+    || old_held != held
+    || old_miro_state != miro_state
+    || old_switch_state != switch_state)
+  {
+    Serial.print("\ngpio0\t");
+    Serial.println(btn_state);
+    Serial.print("held\t");
+    Serial.println(held);
+    Serial.print("state\t");
+    Serial.println(miro_state);
+    Serial.print("switch\t");
+    Serial.println(switch_state%3);
+
+    Serial.print("timer_cycle started ");
+    Serial.print("\t");
+    Serial.print(timerStarted(timer_cycle));
+    Serial.print("\t");
+    Serial.println(timerRead(timer_cycle));
+    Serial.print("timer span started ");
+    Serial.print("\t");
+    Serial.print(timerStarted(timer_span));
+    Serial.print("\t");
+    Serial.println(timerRead(timer_span));
+
+    old_btn_state = btn_state;
+    old_held = held;
+    old_miro_state = miro_state;
+    old_switch_state = switch_state;
+
+    Serial.println();
+  }
+}
+
 
 /*
  * ISR

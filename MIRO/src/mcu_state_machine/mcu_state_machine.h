@@ -59,3 +59,9 @@ enum Switch_state
 void parse_ip_to_string(const char* dest, uint8_t* ip) {
   snprintf((char*)dest, 16, "%d.%d.%d.%d\0", *(ip + 0), *(ip + 1), *(ip + 2), *(ip + 3));
 }
+
+char* parse_ip_to_string(uint8_t* ip) {
+  char* ip_str = new char[16]();
+  snprintf(ip_str, 16, "%d.%d.%d.%d", *(ip + 0), *(ip + 1), *(ip + 2), *(ip + 3));
+  return(ip_str);
+}
