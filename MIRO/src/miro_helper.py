@@ -1,3 +1,4 @@
+import subprocess
 from pprint import pprint
 
 DEBUG = 1
@@ -9,6 +10,7 @@ class Miro_helper():
     pid_file = "mosquitto.pid"
     wifi_details = "/etc/wpa_supplicant/wpa_supplicant.conf"
 
+# STATIC
     @staticmethod
     def debug(msg):
         if DEBUG:
@@ -24,7 +26,14 @@ class Miro_helper():
         return(''.join(pl))
     
     @staticmethod
-    def get_ip(cls):
+    def get_ip():
+        ip = subprocess.run(["hostname", "-I"], capture_output=True)
+        ip = ip.stdout.decode().split(' ')[0].split('.')
+        return([int(i) for i in ip])
+
+# CLASS
+    @classmethod
+    def get_port(cls):
         with open(cls.mosquitto_config, 'r') as file:
             lines = file.readlines()
         listener = [line for line in lines if "listener" in line]
