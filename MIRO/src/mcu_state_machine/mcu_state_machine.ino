@@ -276,19 +276,15 @@ void on_message(const char* topic, byte* msg, uint8_t len)
 
 void IRAM_ATTR ISR()
 {
-  if (miro_state == Reset)
+  if (held)
   {
-    held = false;
-  }
-  else if (held)
-  {
-    timerStop(timer_span);
-    timerRestart(timer_span);
+    led_state = LOW;
     switch_state++;
-    digitalWrite(LED, led_state = LOW);
 
-    timerStop(timer_cycle);
-    timerRestart(timer_cycle);
+    timerStop(timer_span);
+
+    // timerStop(timer_cycle);
+    // timerRestart(timer_cycle);
     if (switch_state%3 != sw_normal)
     {
       if (switch_state%3 == sw_transmit)
@@ -300,31 +296,35 @@ void IRAM_ATTR ISR()
         timer_divider = TIMER_DIV >> 3;
       }
       timerSetDivider(timer_cycle, timer_divider);
+      timerRestart(timer_cycle);
       timerStart(timer_cycle);
     }
 
-    miro_state = switch_state%3 + 1;
     held = false;
+    miro_state = switch_state%3 + 1;
   }
   else
   {
     timerStop(timer_cycle);
-    timerRestart(timer_cycle);
+
+    // timerStop(timer_span);
+    // timerRestart(timer_span);
+    timerRestart(timer_span);
     timerStart(timer_span);
-    digitalWrite(LED, led_state = HIGH);
+
     held = true;
+    led_state = HIGH;
   }
 }
 
 void IRAM_ATTR on_alarm_cycle()
 {
-  if (switch_state) { digitalWrite(LED, led_state = !led_state); }
+  if (switch_state) { led_state = !led_state; }
 }
 
 void IRAM_ATTR on_alarm_span()
 {
-  timerStop(timer_span);
-  timerRestart(timer_span);
-  digitalWrite(LED, led_state = LOW);
+  // held = false;
+  led_state = LOW;
   miro_state = Reset;
 }
