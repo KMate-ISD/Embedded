@@ -3,6 +3,7 @@ from pprint import pprint
 DEBUG = 1
 
 class Miro_helper():
+    mosquitto_config = "/etc/mosquitto/mosquitto.conf"
     passwordfile = "/etc/mosquitto/pwfile"
     pid_path = "/run/mosquitto/"
     pid_file = "mosquitto.pid"
@@ -21,6 +22,13 @@ class Miro_helper():
     def display_message_hex(msg):
         pl = [f"{msg.payload[i]:#04x}\n" if i%4==3 else f"{msg.payload[i]:#04x} " for i in range(len(msg.payload))]
         return(''.join(pl))
+    
+    @staticmethod
+    def get_ip(cls):
+        with open(cls.mosquitto_config, 'r') as file:
+            lines = file.readlines()
+        listener = [line for line in lines if "listener" in line]
+        return(next(iter(listener)).split(' ')[-1].strip())
     
     @classmethod
     def get_mqtt_users(cls):
