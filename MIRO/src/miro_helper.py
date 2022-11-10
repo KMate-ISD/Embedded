@@ -29,7 +29,7 @@ class Miro_helper():
     def get_ip():
         ip = subprocess.run(["hostname", "-I"], capture_output=True)
         ip = ip.stdout.decode().split(' ')[0].split('.')
-        return([int(i) for i in ip])
+        return(ip, [int(i) for i in ip])
 
 # CLASS
     @classmethod
