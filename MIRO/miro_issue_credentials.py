@@ -84,7 +84,7 @@ def setup(args):
             return(initialize_context(*cla.values()))
     
     else:
-        return(initialize_context())
+        return(initialize_context(broker=Miro_helper.get_ip()[0], port=Miro_helper.get_port()))
 
 def start_listener():
     mqtt.add_client(**dict({SUPER_U: SUPER_P}))
@@ -121,10 +121,14 @@ def write_creds_to_tag(ctx):
         # Preparing data to write to rfid tag
         userpass = ''.join(creds)
         ssid, psk = Miro_helper.get_wifi_credentials()
+        port = Miro_helper.get_port().to_bytes(2, byteorder="big")
+        port = reduce(lambda a, b: a*256 + b, port)
         start = f"{chr(0xE0)}{chr(len(ssid))}"
         next = f"{chr(0xED)}{chr(len(psk))}"
         stop = f"{chr(0xEA)}{chr(len(ssid) + (len(psk)))}"
-        data = f"{userpass}{start}{ssid}{next}{psk}{stop}"
+        broker = f"{''.join([chr(byte) for byte in Miro_helper.get_ip()[1]])}"
+        port = f"{Miro_helper.get_port()}"
+        data = f"{userpass}{start}{ssid}{next}{psk}{stop}{broker}{port}"
         Miro_helper.debug(data)
 
         # save prepared data to rfid tag
