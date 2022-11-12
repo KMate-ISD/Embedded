@@ -1,4 +1,6 @@
 #include "mcu_credentials_processor.h"
+#include "mcu_tag_encoder_decoder_ul.h"
+#include "mcu_state_machine.h"
 
 
 Credentials_processor::Credentials_processor(Preferences& preferences)
@@ -16,17 +18,67 @@ Credentials_processor::~Credentials_processor()
   delete[] this->mqtt_pass;
 }
 
+bool Credentials_processor::check_and_decode(uint8_t* data)
+{
+  /*
+   * mqtt user    len = 4
+   * mqtt pass    len = 4
+   * 0xE0         ssid start signal
+   * ssid len
+   * ssid         len = dynamic
+   * 0xED         psk start signal
+   * psk len
+   * psk          len = dynamic
+   * 0xEA         wlan end signal
+   * wlan len     ssid len + psk len
+   * broker ip    len = 4
+   * port         len = 2
+   * 0xDB         conclude signal
+   */
+
+  char sig_ssid_start   = 0xE0;
+  char sig_psk_start    = 0xED;
+  char sig_wlan_end     = 0xEA;
+  char sig_full_stop    = 0xDB;
+
+  uint8_t* p_sig_psk_start;
+  uint8_t* p_sig_wlan_end;
+  uint8_t* len_ssid;
+  uint8_t* len_psk;
+
+  bool ret = false;
+
+  uint8_t i = 8;
+  if (*(data + i++) != sig_ssid_start) { return(ret); }
+
+  len_ssid = data + i;
+  p_sig_psk_start = len_ssid + *len_ssid + 1;
+  if (*p_sig_psk_start != sig_psk_start) { return(ret); }
+
+  len_psk = p_sig_psk_start + 1;
+  p_sig_wlan_end = len_psk + *len_psk + 1;
+  if (*p_sig_wlan_end != sig_wlan_end) { return(ret); }
+
+  if (*(p_sig_wlan_end + 1) != *len_ssid + *len_psk) { return(ret); }
+
+  if (*(p_sig_wlan_end + 8) == sig_full_stop) { ret = true; }
+
+  return(ret);
+}
+
 uint8_t Credentials_processor::check_if_preferences_has_keys(uint8_t args_count, ...)
 {
-  va_list args;
   uint8_t i;
   uint8_t log_val = 1;
+
+  va_list args;
   va_start(args, args_count);
   for (i = 0; i < args_count; i++)
   {
     log_val &= preferences.isKey(va_arg(args, const char*));
   }
   va_end(args);
+
   return(log_val);
 }
 

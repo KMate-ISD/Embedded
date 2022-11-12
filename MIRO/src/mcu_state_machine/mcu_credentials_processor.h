@@ -3,7 +3,6 @@
 
 #include <cstdarg>
 #include <Preferences.h>
-#include "mcu_state_machine.h"
 
 
 class Credentials_processor
@@ -24,6 +23,7 @@ class Credentials_processor
     Credentials_processor(Preferences&);
     ~Credentials_processor();
     
+    bool check_and_decode(uint8_t*);
     uint8_t check_if_preferences_has_keys(uint8_t, ...);
     void alloc_mqtt_creds();
     void alloc_wifi_creds(uint8_t, uint8_t);

@@ -18,8 +18,12 @@
 
 #define BTN                   0
 #define LED                   2
+
+#ifndef TAG_DECODER
 #define RF_RST                22
 #define RF_SS                 21
+#endif
+
 #define TIMER0                0
 #define TIMER1                1
 #define RW_MODE               false

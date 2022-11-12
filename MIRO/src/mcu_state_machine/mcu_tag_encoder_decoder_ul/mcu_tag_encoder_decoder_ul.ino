@@ -1,7 +1,7 @@
 #include <SPI.h>
 #include <string>
 #include "mcu_tag_encoder_decoder_ul.h"
-#include "C:/Computer_science/Projects/Embedded/MIRO/src/mcu_state_machine/mcu_state_machine.h"
+#include "mcu_state_machine.h"
 
 
 /* Globals */

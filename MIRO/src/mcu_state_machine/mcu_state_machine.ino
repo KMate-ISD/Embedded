@@ -1,6 +1,8 @@
 #include <PubSubClient.h>
 #include <WiFi.h>
 #include "mcu_credentials_processor.h"
+#include "mcu_tag_encoder_decoder_ul.h"
+#include "mcu_state_machine.h"
 
 
 /*
@@ -43,6 +45,10 @@ hw_timer_t* timer_span;
   // NVM
 Preferences preferences;
 Credentials_processor proc(preferences);
+
+  // RFID
+MFRC522 rfid(RF_SS, RF_RST);
+Tag_encoder_decoder ecdc(rfid);
 
   // Debug
 bool old_btn_state          = LOW;
@@ -88,12 +94,14 @@ void setup()
   parse_ip_to_string(mqtt_broker, mqtt_broker_bytes);
 #endif
 
-  // [0] Initialize
-  Serial.begin(BAUD_RATE);
-  DEBUG(Serial.println())
-
-    // Op.
+    // [0] Begin with Initialize state
   miro_state = Initialize;
+
+    // Initialize
+  Serial.begin(BAUD_RATE);
+  SPI.begin();
+  ecdc.rfid.PCD_Init();
+  DEBUG(Serial.println())
 
     // NVM;
   bool exist = proc.print_creds();
@@ -120,7 +128,7 @@ void setup()
     // Timer
   init_timer();
   
-  // [1] Continue with normal operation 
+    // [1] Continue with normal operation 
   miro_state = Normal_op;
 }
 
@@ -143,6 +151,28 @@ void loop()
       break;
 
     case Transmit:
+      if (rfid.PICC_IsNewCardPresent()) // New tag in proximity of the reader
+      {
+        if (rfid.PICC_ReadCardSerial()) // NUID read
+        {
+          // Read lines
+          uint8_t start_block = SECTOR_START;
+          uint8_t stop_block = BLOCK_COUNT;
+          uint8_t len_data = (stop_block - start_block)*BLOCK_SIZE;
+          uint8_t* data = (uint8_t*)malloc(len_data*sizeof(uint8_t));
+          ecdc.read_blocks(data, start_block, stop_block);
+          Serial.println();
+          ecdc.print_hex(data, len_data);
+
+          // Safe close
+          ecdc.end_op();
+
+          Serial.print("Check and decode: ");
+          Serial.println(proc.check_and_decode(data));
+
+          free(data);
+        }
+      }
       break;
 
     case Receive:
@@ -185,9 +215,9 @@ void hard_reset()
   timerStop(timer_span);
   timerRestart(timer_span);
 
-  proc.preferences.begin("miro_creds", RW_MODE);
-  proc.preferences.clear();
-  proc.preferences.end();
+  // proc.preferences.begin("miro_creds", RW_MODE);
+  // proc.preferences.clear();
+  // proc.preferences.end();
 
   digitalWrite(LED, led_state = LOW);
   ESP.restart();

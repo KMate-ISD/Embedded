@@ -121,14 +121,15 @@ def write_creds_to_tag(ctx):
         # Preparing data to write to rfid tag
         userpass = ''.join(creds)
         ssid, psk = Miro_helper.get_wifi_credentials()
+        broker = f"{''.join([chr(byte) for byte in Miro_helper.get_ip()[1]])}"
         port = Miro_helper.get_port().to_bytes(2, byteorder="big")
         port = reduce(lambda a, b: a*256 + b, port)
-        start = f"{chr(0xE0)}{chr(len(ssid))}"
-        next = f"{chr(0xED)}{chr(len(psk))}"
-        stop = f"{chr(0xEA)}{chr(len(ssid) + (len(psk)))}"
-        broker = f"{''.join([chr(byte) for byte in Miro_helper.get_ip()[1]])}"
         port = f"{Miro_helper.get_port()}"
-        data = f"{userpass}{start}{ssid}{next}{psk}{stop}{broker}{port}"
+        ssid_start = f"{chr(0xE0)}{chr(len(ssid))}"
+        psk_start = f"{chr(0xED)}{chr(len(psk))}"
+        wlan_end = f"{chr(0xEA)}{chr(len(ssid) + (len(psk)))}"
+        full_stop =f"{chr(0xDB)}"
+        data = f"{userpass}{ssid_start}{ssid}{psk_start}{psk}{wlan_end}{broker}{port}{full_stop}"
         Miro_helper.debug(data)
 
         # save prepared data to rfid tag
