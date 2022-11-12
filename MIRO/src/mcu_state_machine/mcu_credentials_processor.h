@@ -32,7 +32,7 @@ class Credentials_processor
     void set_wifi_creds(char*, uint8_t, char*, uint8_t);
     bool load_preferences(void);
     void save_preferences(void);
-    bool print_creds(void);
+    void print_creds(void);
 };
 
 #endif // CREDENTIALS_PROCESSOR

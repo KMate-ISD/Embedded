@@ -104,7 +104,8 @@ void setup()
   DEBUG(Serial.println())
 
     // NVM;
-  bool exist = proc.print_creds();
+  bool exist = proc.load_preferences();
+  if (exist) { proc.print_creds(); }
 
     // WLAN
   init_wifi();
@@ -151,31 +152,13 @@ void loop()
       break;
 
     case Transmit:
-      if (rfid.PICC_IsNewCardPresent()) // New tag in proximity of the reader
-      {
-        if (rfid.PICC_ReadCardSerial()) // NUID read
-        {
-          // Read lines
-          uint8_t start_block = SECTOR_START;
-          uint8_t stop_block = BLOCK_COUNT;
-          uint8_t len_data = (stop_block - start_block)*BLOCK_SIZE;
-          uint8_t* data = (uint8_t*)malloc(len_data*sizeof(uint8_t));
-          ecdc.read_blocks(data, start_block, stop_block);
-          Serial.println();
-          ecdc.print_hex(data, len_data);
-
-          // Safe close
-          ecdc.end_op();
-
-          Serial.print("Check and decode: ");
-          Serial.println(proc.check_and_decode(data));
-
-          free(data);
-        }
-      }
       break;
 
     case Receive:
+      if (read_credentials())
+      {
+        for (uint8_t i = 0; i < 2; i++) { ISR(); }
+      }
       break;
 
     case Deep_sleep:
@@ -342,6 +325,38 @@ void print_state()
 
     Serial.println();
   }
+}
+
+  // RFID
+bool read_credentials()
+{
+  bool check_data_integrity = 0;
+  
+  if (rfid.PICC_IsNewCardPresent()) // New tag in proximity of the reader
+  {
+    if (rfid.PICC_ReadCardSerial()) // NUID read
+    {
+      // Read lines
+      uint8_t start_block = SECTOR_START;
+      uint8_t stop_block = BLOCK_COUNT;
+      uint8_t len_data = (stop_block - start_block)*BLOCK_SIZE;
+      uint8_t* data = (uint8_t*)malloc(len_data*sizeof(uint8_t));
+      ecdc.read_blocks(data, start_block, stop_block);
+      Serial.println();
+      DEBUG(ecdc.print_hex(data, len_data))
+
+      if (check_data_integrity = proc.check_and_decode(data))
+      {
+        
+      }
+
+      // Safe close
+      ecdc.end_op();
+      free(data);
+    }
+  }
+
+  return(check_data_integrity);
 }
 
 

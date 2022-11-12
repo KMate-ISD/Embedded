@@ -41,27 +41,36 @@ bool Credentials_processor::check_and_decode(uint8_t* data)
   char sig_wlan_end     = 0xEA;
   char sig_full_stop    = 0xDB;
 
+  uint8_t* p_sig_ssid_start;
   uint8_t* p_sig_psk_start;
   uint8_t* p_sig_wlan_end;
-  uint8_t* len_ssid;
-  uint8_t* len_psk;
+  uint8_t* p_len_ssid;
+  uint8_t* p_len_psk;
 
   bool ret = false;
 
-  uint8_t i = 8;
-  if (*(data + i++) != sig_ssid_start) { return(ret); }
+  p_sig_ssid_start = data + 8;
+  if (*p_sig_ssid_start != sig_ssid_start) { return(ret); }
+  p_len_ssid = p_sig_ssid_start + 1;
 
-  len_ssid = data + i;
-  p_sig_psk_start = len_ssid + *len_ssid + 1;
+  p_sig_psk_start = p_len_ssid + *p_len_ssid + 1;
   if (*p_sig_psk_start != sig_psk_start) { return(ret); }
+  p_len_psk = p_sig_psk_start + 1;
 
-  len_psk = p_sig_psk_start + 1;
-  p_sig_wlan_end = len_psk + *len_psk + 1;
+  p_sig_wlan_end = p_len_psk + *p_len_psk + 1;
   if (*p_sig_wlan_end != sig_wlan_end) { return(ret); }
 
-  if (*(p_sig_wlan_end + 1) != *len_ssid + *len_psk) { return(ret); }
+  if (*(p_sig_wlan_end + 1) != *p_len_ssid + *p_len_psk) { return(ret); }
 
   if (*(p_sig_wlan_end + 8) == sig_full_stop) { ret = true; }
+
+  if (ret)
+  {
+    this->set_wifi_creds((char*)(p_sig_ssid_start + 2), *p_len_ssid, (char*)(p_sig_psk_start + 2), *p_len_psk);
+    this->set_mqtt_creds((char*)data, (char*)(data + 4));
+    this->set_mqtt_server(p_sig_wlan_end + 2, *(p_sig_wlan_end + 6)*256 + *(p_sig_wlan_end + 7));
+    this->print_creds();
+  }
 
   return(ret);
 }
@@ -170,30 +179,23 @@ void Credentials_processor::save_preferences()
   Serial.println("Preferences saved to NVS.");
 }
 
-bool Credentials_processor::print_creds()
+void Credentials_processor::print_creds()
 {
-  bool exist = this->load_preferences();
+  char* ip_str = new char[16]();
+  parse_ip_to_string(ip_str, this->mqtt_broker);
 
-  if (exist)
-  {
-    char* ip_str = new char[16]();
-    parse_ip_to_string(ip_str, this->mqtt_broker);
+  Serial.print("Port\t");
+  Serial.println(this->mqtt_port);
+  Serial.print("Broker\t");
+  Serial.println(ip_str);
+  Serial.print("User\t");
+  Serial.println(this->mqtt_user);
+  Serial.print("Pass\t");
+  Serial.println(this->mqtt_pass);
+  Serial.print("Psk\t");
+  Serial.println(this->wlan_psk);
+  Serial.print("Ssid\t");
+  Serial.println(this->wlan_ssid);
 
-    Serial.print("Port\t");
-    Serial.println(this->mqtt_port);
-    Serial.print("Broker\t");
-    Serial.println(ip_str);
-    Serial.print("User\t");
-    Serial.println(this->mqtt_user);
-    Serial.print("Pass\t");
-    Serial.println(this->mqtt_pass);
-    Serial.print("Psk\t");
-    Serial.println(this->wlan_psk);
-    Serial.print("Ssid\t");
-    Serial.println(this->wlan_ssid);
-
-    delete[] ip_str;
-  }
-
-  return(exist);
+  delete[] ip_str;
 }
