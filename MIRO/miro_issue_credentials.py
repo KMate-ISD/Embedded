@@ -84,7 +84,7 @@ def setup(args):
             return(initialize_context(*cla.values()))
     
     else:
-        return(initialize_context(broker=Miro_helper.get_ip()[0], port=int(Miro_helper.get_port())))
+        return(initialize_context(broker=Miro_helper.get_ip()[0], port=Miro_helper.get_port()))
 
 def start_listener():
     mqtt.add_client(**dict({SUPER_U: SUPER_P}))

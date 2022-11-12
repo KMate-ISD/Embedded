@@ -38,7 +38,7 @@ class Miro_helper():
         with open(cls.mosquitto_config, 'r') as file:
             lines = file.readlines()
         listener = [line for line in lines if "listener" in line]
-        return(next(iter(listener)).split(' ')[-1].strip())
+        return(int(next(iter(listener)).split(' ')[-1].strip()))
     
     @classmethod
     def get_mqtt_users(cls):
