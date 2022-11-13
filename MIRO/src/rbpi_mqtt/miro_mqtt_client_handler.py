@@ -23,8 +23,8 @@ class Miro_mqtt_client_handler():
         print(f"Client disconnected: {client}")
 
     def on_message(self, client, userdata, msg):
+        Miro_helper.debug("")
         print(f"\n{Miro_helper.display_message(msg)}\n")
-        Miro_helper.debug("\n")
         Miro_helper.debug(Miro_helper.display_message_hex(msg))
 
     def add_client(self, **credentials):
