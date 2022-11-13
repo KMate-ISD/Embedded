@@ -110,7 +110,18 @@ void setup()
   init_timer();
   
     // [1] Continue with Normal operation or Receive if config is broken
-  config_exists ? miro_state = Normal_op : miro_state = Receive;
+  if (config_exists)
+  {
+    miro_state = Normal_op;
+  }
+  else
+  {
+    switch_state = sw_receive;
+    miro_state = Receive;
+    switch_to_receive();
+  }
+
+    // So commands depending on time delta would run once after Init no matter what
   t0 = millis() - REST;
 }
 
@@ -380,8 +391,6 @@ void init_timer()
 
 void start_timer_cycle()
 {
-  led_state = LOW;
-  timerStop(timer_span);
   timerSetDivider(timer_cycle, timer_divider);
   timerRestart(timer_cycle);
   timerStart(timer_cycle);
@@ -389,16 +398,12 @@ void start_timer_cycle()
 
 void switch_to_receive()
 {
-  switch_state = sw_receive;
-  miro_state = Receive;
   timer_divider = TIMER_DIV >> 3;
   start_timer_cycle();
 }
 
 void switch_to_transmit()
 {
-  switch_state = sw_transmit;
-  miro_state = Transmit;
   timer_divider = TIMER_DIV >> 1;
   start_timer_cycle();
 }
@@ -418,15 +423,12 @@ void IRAM_ATTR ISR()
       {
         if (switch_state%3 == sw_transmit)
         {
-          timer_divider = TIMER_DIV >> 1;
+          switch_to_transmit();
         }
         else
         {
-          timer_divider = TIMER_DIV >> 3;
+          switch_to_receive();
         }
-        timerSetDivider(timer_cycle, timer_divider);
-        timerRestart(timer_cycle);
-        timerStart(timer_cycle);
       }
 
       held = false;
