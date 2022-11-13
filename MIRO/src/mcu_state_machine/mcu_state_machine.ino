@@ -235,10 +235,10 @@ bool mqtt_connect()
     
     snprintf(topic, 10, "auth/%s", proc.mqtt_user);
     DEBUG(
-      Serial.print("Publishing ALIVE message to ");
+      Serial.print("Publishing IMALIVE message to ");
       Serial.println(topic);
     )
-    mqtt_client->publish(topic, "ALIVE");
+    mqtt_client->publish(topic, "IMALIVE");
     mqtt_client->subscribe("admin/debug");
     Serial.print(proc.mqtt_user);
     Serial.println(" connected.");
