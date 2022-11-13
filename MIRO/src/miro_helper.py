@@ -1,4 +1,5 @@
 import subprocess
+from pprint import pprint
 
 DEBUG = 1
 
@@ -13,7 +14,7 @@ class Miro_helper():
     @staticmethod
     def debug(msg):
         if DEBUG:
-            print(msg)
+            pprint(msg)
 
     @staticmethod
     def display_message(msg):
@@ -22,7 +23,7 @@ class Miro_helper():
     @staticmethod
     def display_message_hex(msg):
         pl = [f"{msg.payload[i]:#04x}\n" if i%4==3 else f"{msg.payload[i]:#04x} " for i in range(len(msg.payload))]
-        return(''.join(pl))
+        return(''.join(pl).split('\n'))
     
     @staticmethod
     def get_ip():
