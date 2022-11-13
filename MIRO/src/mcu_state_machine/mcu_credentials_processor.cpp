@@ -148,12 +148,6 @@ bool Credentials_processor::load_preferences()
     this->preferences.getString("mqtt_pass", this->mqtt_pass, LEN_MQ_CREDS + 1);
     this->preferences.getString("wlan_psk", this->wlan_psk, this->len_wlan_psk + 1);
     this->preferences.getString("wlan_ssid", this->wlan_ssid, this->len_wlan_ssid + 1);
-
-    Serial.println("Preferences loaded.");
-  }
-  else
-  {
-    Serial.println("No preferences to load.");
   }
   
   this->preferences.end();
@@ -175,8 +169,6 @@ void Credentials_processor::save_preferences()
   this->preferences.putString("wlan_ssid", this->wlan_ssid);
 
   this->preferences.end();
-
-  Serial.println("Preferences saved to NVS.");
 }
 
 void Credentials_processor::print_creds()
