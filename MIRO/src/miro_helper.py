@@ -14,7 +14,10 @@ class Miro_helper():
     @staticmethod
     def debug(msg):
         if DEBUG:
-            pprint(msg)
+            if type(msg) is list:
+                pprint(msg)
+            else:
+                print(msg)
 
     @staticmethod
     def display_message(msg):
@@ -23,7 +26,7 @@ class Miro_helper():
     @staticmethod
     def display_message_hex(msg):
         pl = [f"{msg.payload[i]:#04x}\n" if i%4==3 else f"{msg.payload[i]:#04x} " for i in range(len(msg.payload))]
-        return(''.join(pl)[:-1].split('\n'))
+        return(''.join(pl)[:-1])
     
     @staticmethod
     def get_ip():
