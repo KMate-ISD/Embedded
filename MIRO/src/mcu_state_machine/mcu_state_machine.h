@@ -2,13 +2,14 @@
 #define STATE_MACHINE
 
 /*
- #  STATE             TRIGGER
- 0  Initialize        power on
- 1  Receive           Initialize phase ends while no credentials are saved / On board flash button released while in Normal operational state.
- 2  Normal operation  Connection established
- 3  Transmit          On-board flash button released while in Receive state
- 4  Reset             On-board flash button pressed and held for 5 seconds
- 5  Deep sleep        Receive phase ends while no credentials are saved
+ #    STATE             TRIGGER
+ 0    Initialize        power on
+ 1.0  Receive           Initialize phase ends while no credentials are saved / On board flash button released while in Normal operational state.
+ 1.1  Listen            This is the exact same as Receive in function, but switching out of this state is prohibited (reset possible)
+ 2    Normal operation  Connection established
+ 3    Transmit          On-board flash button released while in Receive state
+ 4    Reset             On-board flash button pressed and held for 5 seconds
+ 5    Deep sleep        Receive phase ends while no credentials are saved
  */
 
 
