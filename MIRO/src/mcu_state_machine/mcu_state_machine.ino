@@ -132,33 +132,32 @@ void setup()
 
 void loop()
 {
+  // Common
   td = millis();
   DEBUG(print_state())
+  
+  if (
+    (miro_state != Reset
+      || miro_state != Deep_sleep)
+    && config_exists)
+  {
+    keep_mqtt_connected();
+  }
 
   // [2] Normal operation
   switch (miro_state)
   {
     case Normal_op:
-      if (!mqtt_client->connected() && td - t0 > REST)
-      {
-        if (!mqtt_connect())
-        {
-          Serial.print("failed. rc=");
-          Serial.println(mqtt_client->state());
-          Serial.print("Retry in ");
-          Serial.print(REST/1000);
-          Serial.println(" seconds.");
-        }
-        t0 = td;
-      }
-      else
-      {
-        mqtt_client->loop();
-      }
-
       break;
 
     case Transmit:
+      if (td - t0 > REST/2)
+      {
+        // config/data
+        // config/trigger
+        mqtt_client->publish("config/trigger", "REED");
+        t0 = td;
+      }
       break;
 
     case Receive:
@@ -235,6 +234,32 @@ void init_mqtt()
   mqtt_client->setCallback(on_message);
 }
 
+bool keep_mqtt_connected()
+{
+  bool ret = false;
+
+  if (!mqtt_client->connected() && td - t0 > REST)
+  {
+    if (ret = !mqtt_connect())
+    {
+      Serial.print("failed. rc=");
+      Serial.println(mqtt_client->state());
+      Serial.print("Retry in ");
+      Serial.print(REST/1000);
+      Serial.println(" seconds.");
+    }
+    t0 = td;
+    ret = !ret;
+  }
+  else
+  {
+    ret = true;
+    mqtt_client->loop();
+  }
+
+  return(ret);
+}
+
 bool mqtt_connect()
 {
   Serial.print("Connecting to MQTT broker... ");
@@ -247,10 +272,12 @@ bool mqtt_connect()
     snprintf(topic, 10, "auth/%s", proc.mqtt_user);
     DEBUG(
       Serial.print("Publishing IMALIVE message to ");
-      Serial.println(topic);
-    )
+      Serial.println(topic))
     mqtt_client->publish(topic, "IMALIVE");
+
     mqtt_client->subscribe("admin/debug");
+    mqtt_client->subscribe("trigger/REED");
+
     Serial.print(proc.mqtt_user);
     Serial.println(" connected.");
     
@@ -277,6 +304,14 @@ void on_message(const char* topic, byte* msg, uint8_t len)
   
   Serial.println();
 
+  if (!strcmp(topic, "trigger/REED"))
+  {
+    if (miro_state == Transmit && !strcmp(buf, "GOTCHA"))
+    {
+      switch_to_normal();
+    }
+  }
+  
   if (!strcmp(topic, "admin/debug"))
   {
     if (!strcmp(buf, "DEBUG"))
@@ -394,6 +429,14 @@ void start_timer_cycle()
   timerSetDivider(timer_cycle, timer_divider);
   timerRestart(timer_cycle);
   timerStart(timer_cycle);
+}
+
+void switch_to_normal()
+{
+  timerStop(timer_cycle);
+  led_state = LOW;
+  switch_state = sw_normal;
+  miro_state = Normal_op;
 }
 
 void switch_to_receive()
