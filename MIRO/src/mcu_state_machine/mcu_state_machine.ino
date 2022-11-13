@@ -21,6 +21,7 @@ bool held                   = false;            // Pushbutton is held
 bool debug                  = true;             // Display detailed info via Serial
 bool config_exists          = false;            // Config loaded from NVM
 uint8_t miro_state          = Undefined;        // State of operation
+uint8_t c                   = 0;                // General purpose counter
 size_t t0                   = 0;                // Initial time
 size_t td;                                      // Measured time
 
@@ -151,10 +152,11 @@ void loop()
       break;
 
     case Transmit:
-      if (td - t0 > REST/2)
+      if (td - t0 > REST/3)
       {
         // config/data
         // config/trigger
+        if (!(++c % 8)) { switch_to_normal(); }
         mqtt_client->publish("config/trigger", "REED");
         t0 = td;
       }
@@ -311,7 +313,7 @@ void on_message(const char* topic, byte* msg, uint8_t len)
       switch_to_normal();
     }
   }
-  
+
   if (!strcmp(topic, "admin/debug"))
   {
     if (!strcmp(buf, "DEBUG"))
@@ -434,6 +436,7 @@ void start_timer_cycle()
 void switch_to_normal()
 {
   timerStop(timer_cycle);
+  c = 0;
   led_state = LOW;
   switch_state = sw_normal;
   miro_state = Normal_op;
