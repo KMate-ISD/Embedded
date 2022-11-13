@@ -9,24 +9,20 @@
  * GLOBAL
  */
 
-  // Wi-Fi
-const char* wlan_ssid;
-const char* wlan_psk;
-WiFiClient wifi_client;
-
-  // MQTT
-uint16_t mqtt_port;
-const char* mqtt_broker;
-const char* mqtt_pass;
-const char* mqtt_user;
-PubSubClient* mqtt_client;
+  // Debug
+bool old_btn_state          = LOW;
+bool old_held               = false;
+bool old_led_state          = false;
+uint8_t old_miro_state      = Undefined;
+uint8_t old_switch_state    = sw_normal;
 
   // Op.
 bool held                   = false;            // Pushbutton is held
 bool debug                  = true;             // Display detailed info via Serial
+bool config_exists          = false;            // Config loaded from NVM
 uint8_t miro_state          = Undefined;        // State of operation
-size_t t0                   = 0;
-size_t td;
+size_t t0                   = 0;                // Initial time
+size_t td;                                      // Measured time
 
   // Peripherals
 bool btn_state;
@@ -42,6 +38,10 @@ uint16_t timer_divider      = TIMER_DIV;
 hw_timer_t* timer_cycle;
 hw_timer_t* timer_span;
 
+  // Network
+WiFiClient wifi_client;
+PubSubClient* mqtt_client;
+
   // NVM
 Preferences preferences;
 Credentials_processor proc(preferences);
@@ -49,13 +49,6 @@ Credentials_processor proc(preferences);
   // RFID
 MFRC522 rfid(RF_SS, RF_RST);
 Tag_encoder_decoder ecdc(rfid);
-
-  // Debug
-bool old_btn_state          = LOW;
-bool old_held               = false;
-bool old_led_state          = false;
-uint8_t old_miro_state      = Undefined;
-uint8_t old_switch_state    = sw_normal;
 
 
 /*
@@ -66,7 +59,7 @@ void hard_reset(void);
 void init_mqtt(void);
 void init_timer(void);
 void init_wifi(void);
-void mqtt_reconnect(void);
+bool mqtt_connect(void);
 void on_message(const char*, byte*, uint8_t);
 void print_state(void);
 void setup();
@@ -83,17 +76,6 @@ void IRAM_ATTR on_alarm_span(void);
 
 void setup()
 {
-#if 1
-  wlan_ssid   = "Telekom-B4Wf5Y";
-  wlan_psk    = "PIcSafaSZ_+9*";
-  mqtt_port   = 1883;
-  mqtt_user   = "user";
-  mqtt_pass   = "pass";
-  mqtt_broker = (const char*)malloc(LEN_MAX_IP*sizeof(char));
-  uint8_t mqtt_broker_bytes[4] = {192, 168, 1, 85};
-  parse_ip_to_string(mqtt_broker, mqtt_broker_bytes);
-#endif
-
     // [0] Begin with Initialize state
   miro_state = Initialize;
 
@@ -104,33 +86,31 @@ void setup()
   DEBUG(Serial.println())
 
     // NVM;
-  bool exist = proc.load_preferences();
-  if (exist) { proc.print_creds(); }
-
-    // WLAN
-  init_wifi();
-
-    // MQTT
-  init_mqtt();
-
-  if (!exist)
+  if (config_exists = proc.load_preferences())
   {
-    proc.set_mqtt_server(mqtt_broker_bytes, mqtt_port);
-    proc.set_mqtt_creds((char*)mqtt_user, (char*)mqtt_pass);
-    proc.set_wifi_creds((char*)wlan_ssid, 14, (char*)wlan_psk, 13);
-    proc.save_preferences();
+    proc.print_creds();
+    DEBUG(Serial.println("Config loaded from NVS."))
+
+      // Wifi
+    init_wifi();
+      // MQTT
+    init_mqtt();
+  }
+  else
+  {
+    DEBUG(Serial.println("No valid configuration found. Entering listening mode."))
   }
 
     // Peripherals
   pinMode(LED, OUTPUT);
   pinMode(BTN, INPUT);
-  attachInterrupt(BTN, ISR, CHANGE);
 
-    // Timer
+    // Interrupts
+  attachInterrupt(BTN, ISR, CHANGE);
   init_timer();
   
-    // [1] Continue with normal operation 
-  miro_state = Normal_op;
+    // [1] Continue with Normal operation or Receive if config is broken
+  config_exists ? miro_state = Normal_op : miro_state = Receive;
 }
 
 
@@ -140,14 +120,23 @@ void setup()
 
 void loop()
 {
+  td = millis();
   DEBUG(print_state())
 
   // [2] Normal operation
   switch (miro_state)
   {
     case Normal_op:
-      if (!mqtt_client->connected()) { mqtt_reconnect(); }
-      mqtt_client->loop();
+      if (!mqtt_connect() && td - t0 > REST)
+      {
+        Serial.print("Retry in ");
+        Serial.print(REST/1000);
+        Serial.println(" seconds.");
+      }
+      else
+      {
+        mqtt_client->loop();
+      }
 
       break;
 
@@ -157,7 +146,8 @@ void loop()
     case Receive:
       if (read_credentials())
       {
-        for (uint8_t i = 0; i < 2; i++) { ISR(); }
+        Serial.println("Resetting node...\n");
+        soft_reset();
       }
       break;
 
@@ -167,14 +157,6 @@ void loop()
     case Reset:
     default:
       hard_reset();
-  }
-
-  td = millis();
-  if (td - t0 > REST*4)
-  {
-    t0 = td;
-    Serial.print("\nstate ");
-    Serial.println(miro_state);
   }
 
   if (led_state != old_led_state)
@@ -188,19 +170,25 @@ void loop()
  * FUNC DEF
  */
 
+  // Reset
 void hard_reset()
 {
   Serial.println("\n:: HARD RESET ::\n");
 
+  proc.preferences.begin("miro_creds", RW_MODE);
+  proc.preferences.clear();
+  proc.preferences.end();
+
+  soft_reset();
+}
+
+void soft_reset()
+{
   timerStop(timer_cycle);
   timerRestart(timer_cycle);
 
   timerStop(timer_span);
   timerRestart(timer_span);
-
-  // proc.preferences.begin("miro_creds", RW_MODE);
-  // proc.preferences.clear();
-  // proc.preferences.end();
 
   digitalWrite(LED, led_state = LOW);
   ESP.restart();
@@ -210,7 +198,7 @@ void hard_reset()
 void init_wifi()
 {
   WiFi.mode(WIFI_STA);
-  WiFi.begin(wlan_ssid, wlan_psk);
+  WiFi.begin(proc.wlan_ssid, proc.wlan_psk);
   
   Serial.print("Connecting to Wi-Fi..");
   while (WiFi.status() != WL_CONNECTED)
@@ -225,30 +213,39 @@ void init_wifi()
 void init_mqtt()
 {
   mqtt_client = new PubSubClient(wifi_client);
-  mqtt_client->setServer(mqtt_broker, mqtt_port);
+  mqtt_client->setServer(proc.mqtt_broker, proc.mqtt_port);
   mqtt_client->setCallback(on_message);
 }
 
-void mqtt_reconnect()
+bool mqtt_connect()
 {
-  while (!mqtt_client->connected())
+  bool ret = mqtt_client->connected();
+
+  if (!ret)
   {
-    Serial.print("Reconnecting to MQTT broker... ");
-    
-    if (mqtt_client->connect("ESP32Client", mqtt_user, mqtt_pass))
+    Serial.print("Connecting to MQTT broker... ");
+    bool ret = mqtt_client->connect("ESP32Client", proc.mqtt_user, proc.mqtt_pass);
+
+    if (ret)
     {
-      Serial.println("connected.");
+      char* topic = new char[10]();
+      
+      snprintf(topic, 9, "auth/%s", proc.mqtt_user);
+      mqtt_client->publish(topic, "OK");
       mqtt_client->subscribe("admin/debug");
+      Serial.print(proc.mqtt_user);
+      Serial.println(" connected.");
+      
+      delete[] topic;
     }
     else
     {
       Serial.print("failed. rc=");
       Serial.println(mqtt_client->state());
-      Serial.print("Retry in ");
-      Serial.print(REST/1000);
-      Serial.println(" seconds.");
     }
   }
+
+  return(ret);
 }
 
   // Callback
@@ -330,7 +327,7 @@ void print_state()
   // RFID
 bool read_credentials()
 {
-  bool check_data_integrity = 0;
+  bool data_structure_appropriate = 0;
   
   if (rfid.PICC_IsNewCardPresent()) // New tag in proximity of the reader
   {
@@ -345,9 +342,10 @@ bool read_credentials()
       Serial.println();
       DEBUG(ecdc.print_hex(data, len_data))
 
-      if (check_data_integrity = proc.check_and_decode(data))
+      if (data_structure_appropriate = proc.check_and_decode(data))
       {
-        
+        proc.save_preferences();
+        DEBUG(Serial.println("Preferences saved to NVS."))
       }
 
       // Safe close
@@ -356,7 +354,7 @@ bool read_credentials()
     }
   }
 
-  return(check_data_integrity);
+  return(data_structure_appropriate);
 }
 
 
@@ -379,42 +377,70 @@ void init_timer()
   timerStop(timer_span);
 }
 
+void start_timer_cycle()
+{
+  led_state = LOW;
+  timerStop(timer_span);
+  timerSetDivider(timer_cycle, timer_divider);
+  timerRestart(timer_cycle);
+  timerStart(timer_cycle);
+}
+
+void switch_to_receive()
+{
+  switch_state = sw_receive;
+  miro_state = Receive;
+  timer_divider = TIMER_DIV >> 3;
+  start_timer_cycle();
+}
+
+void switch_to_transmit()
+{
+  switch_state = sw_transmit;
+  miro_state = Transmit;
+  timer_divider = TIMER_DIV >> 1;
+  start_timer_cycle();
+}
+
 void IRAM_ATTR ISR()
 {
-  if (held)
+  if (config_exists)
   {
-    led_state = LOW;
-    switch_state++;
-
-    timerStop(timer_span);
-
-    if (switch_state%3 != sw_normal)
+    if (held)
     {
-      if (switch_state%3 == sw_transmit)
+      led_state = LOW;
+      switch_state++;
+
+      timerStop(timer_span);
+
+      if (switch_state%3 != sw_normal)
       {
-        timer_divider = TIMER_DIV >> 1;
+        if (switch_state%3 == sw_transmit)
+        {
+          timer_divider = TIMER_DIV >> 1;
+        }
+        else
+        {
+          timer_divider = TIMER_DIV >> 3;
+        }
+        timerSetDivider(timer_cycle, timer_divider);
+        timerRestart(timer_cycle);
+        timerStart(timer_cycle);
       }
-      else
-      {
-        timer_divider = TIMER_DIV >> 3;
-      }
-      timerSetDivider(timer_cycle, timer_divider);
-      timerRestart(timer_cycle);
-      timerStart(timer_cycle);
+
+      held = false;
+      miro_state = switch_state%3 + 1;
     }
+    else
+    {
+      timerStop(timer_cycle);
 
-    held = false;
-    miro_state = switch_state%3 + 1;
-  }
-  else
-  {
-    timerStop(timer_cycle);
+      timerRestart(timer_span);
+      timerStart(timer_span);
 
-    timerRestart(timer_span);
-    timerStart(timer_span);
-
-    held = true;
-    led_state = HIGH;
+      held = true;
+      led_state = HIGH;
+    }
   }
 }
 
