@@ -1,5 +1,4 @@
 import subprocess
-from pprint import pprint
 
 DEBUG = 1
 
@@ -14,7 +13,7 @@ class Miro_helper():
     @staticmethod
     def debug(msg):
         if DEBUG:
-            pprint(msg)
+            print(msg)
 
     @staticmethod
     def display_message(msg):
