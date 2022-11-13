@@ -111,6 +111,7 @@ void setup()
   
     // [1] Continue with Normal operation or Receive if config is broken
   config_exists ? miro_state = Normal_op : miro_state = Receive;
+  t0 = millis() - REST;
 }
 
 
@@ -127,11 +128,17 @@ void loop()
   switch (miro_state)
   {
     case Normal_op:
-      if (!mqtt_connect() && td - t0 > REST)
+      if (!mqtt_client->connected() && td - t0 > REST)
       {
-        Serial.print("Retry in ");
-        Serial.print(REST/1000);
-        Serial.println(" seconds.");
+        if (!mqtt_connect())
+        {
+          Serial.print("failed. rc=");
+          Serial.println(mqtt_client->state());
+          Serial.print("Retry in ");
+          Serial.print(REST/1000);
+          Serial.println(" seconds.");
+        }
+        t0 = td;
       }
       else
       {
@@ -219,30 +226,24 @@ void init_mqtt()
 
 bool mqtt_connect()
 {
-  bool ret = mqtt_client->connected();
+  Serial.print("Connecting to MQTT broker... ");
+  bool ret = mqtt_client->connect("ESP32Client", proc.mqtt_user, proc.mqtt_pass);
 
-  if (!ret)
+  if (ret)
   {
-    Serial.print("Connecting to MQTT broker... ");
-    bool ret = mqtt_client->connect("ESP32Client", proc.mqtt_user, proc.mqtt_pass);
-
-    if (ret)
-    {
-      char* topic = new char[10]();
-      
-      snprintf(topic, 9, "auth/%s", proc.mqtt_user);
-      mqtt_client->publish(topic, "OK");
-      mqtt_client->subscribe("admin/debug");
-      Serial.print(proc.mqtt_user);
-      Serial.println(" connected.");
-      
-      delete[] topic;
-    }
-    else
-    {
-      Serial.print("failed. rc=");
-      Serial.println(mqtt_client->state());
-    }
+    char* topic = new char[10]();
+    
+    snprintf(topic, 10, "auth/%s", proc.mqtt_user);
+    DEBUG(
+      Serial.print("Publishing ALIVE message to ");
+      Serial.println(topic);
+    )
+    mqtt_client->publish(topic, "ALIVE");
+    mqtt_client->subscribe("admin/debug");
+    Serial.print(proc.mqtt_user);
+    Serial.println(" connected.");
+    
+    delete[] topic;
   }
 
   return(ret);
