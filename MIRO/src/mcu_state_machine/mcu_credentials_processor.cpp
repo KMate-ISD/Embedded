@@ -134,7 +134,7 @@ void Credentials_processor::add_trigger(char* topic)
   
   int i = 0;
   while (*(topic + i++)) { }
-  
+
   this->trigger = new char[i]();
   
   *(this->trigger) = i;

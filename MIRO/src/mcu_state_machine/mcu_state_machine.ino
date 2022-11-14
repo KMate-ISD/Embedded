@@ -282,6 +282,8 @@ bool mqtt_connect()
     mqtt_client->publish(topic, "IMALIVE");
 
     mqtt_client->subscribe("admin/debug");
+    mqtt_client->subscribe("config/data");
+    mqtt_client->subscribe("config/trigger");
     mqtt_client->subscribe("trigger/REED");
 
     Serial.print(proc.mqtt_user);
@@ -310,9 +312,21 @@ void on_message(const char* topic, byte* msg, uint8_t len)
   
   Serial.println();
 
-  if (!strcmp(topic, "trigger/REED"))
+  if (miro_state == Receive && !strcmp(topic, "config/trigger"))
   {
-    if (miro_state == Transmit && !strcmp(buf, "GOTCHA"))
+    proc.add_trigger(buf);
+    DEBUG(
+      Serial.print(proc.trigger + 1);
+      Serial.print(" added as trigger. (length: ");
+      Serial.print((uint8_t)*proc.trigger);
+      Serial.println(")");
+    )
+    switch_to_normal();
+  }
+
+  if (miro_state == Transmit && !strcmp(topic, "trigger/REED"))
+  {
+    if (!strcmp(buf, "GOTCHA"))
     {
       switch_to_normal();
     }
@@ -332,6 +346,12 @@ void on_message(const char* topic, byte* msg, uint8_t len)
       proc.preferences.clear();
       proc.preferences.end();
       Serial.println("Preferences cleared.");
+    }
+    else if (debug && !strcmp(buf, "GETTRIG"))
+    {
+      Serial.print(proc.trigger + 1);
+      Serial.print(" //length: ");
+      Serial.print((uint8_t)*proc.trigger);
     }
   }
 
