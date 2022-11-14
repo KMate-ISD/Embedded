@@ -6,7 +6,7 @@
 Credentials_processor::Credentials_processor(Preferences& preferences)
   : preferences { preferences }
 {
-  this->alloc_mqtt_creds();
+  this->alloc_mem_mqtt_creds();
 }
 
 Credentials_processor::~Credentials_processor()
@@ -91,14 +91,14 @@ uint8_t Credentials_processor::check_if_preferences_has_keys(uint8_t args_count,
   return(log_val);
 }
 
-void Credentials_processor::alloc_mqtt_creds()
+void Credentials_processor::alloc_mem_mqtt_creds()
 {
   this->mqtt_broker = new uint8_t[4];
   this->mqtt_user = new char[LEN_MQ_CREDS + 1]();
   this->mqtt_pass = new char[LEN_MQ_CREDS + 1]();
 }
 
-void Credentials_processor::alloc_wifi_creds(uint8_t len_wlan_ssid, uint8_t len_wlan_psk)
+void Credentials_processor::alloc_mem_wifi_creds(uint8_t len_wlan_ssid, uint8_t len_wlan_psk)
 {
   if (this->len_wlan_ssid) { delete[] this->wlan_ssid; }
   if (this->len_wlan_psk) { delete[] this->wlan_psk; }
@@ -122,7 +122,7 @@ void Credentials_processor::set_mqtt_creds(char* mqtt_user, char* mqtt_pass)
 
 void Credentials_processor::set_wifi_creds(char* wlan_ssid, uint8_t len_wlan_ssid, char* wlan_psk, uint8_t len_wlan_psk)
 {
-  alloc_wifi_creds(len_wlan_ssid, len_wlan_psk);
+  alloc_mem_wifi_creds(len_wlan_ssid, len_wlan_psk);
   memcpy(this->wlan_ssid, wlan_ssid, this->len_wlan_ssid);
   memcpy(this->wlan_psk, wlan_psk, this->len_wlan_psk);
 }
