@@ -84,7 +84,7 @@ uint8_t Credentials_processor::check_if_preferences_has_keys(uint8_t args_count,
   va_start(args, args_count);
   for (i = 0; i < args_count; i++)
   {
-    log_val &= preferences.isKey(va_arg(args, const char*));
+    log_val &= this->preferences.isKey(va_arg(args, const char*));
   }
   va_end(args);
 
