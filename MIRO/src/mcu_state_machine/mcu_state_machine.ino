@@ -3,6 +3,8 @@
 #include "mcu_credentials_processor.h"
 #include "mcu_tag_encoder_decoder_ul.h"
 #include "mcu_state_machine.h"
+#include "soc/soc.h"
+#include "soc/rtc_cntl_reg.h"
 
 
 /*
@@ -77,6 +79,8 @@ void IRAM_ATTR on_alarm_span(void);
 
 void setup()
 {
+  WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0);
+
     // [0] Begin with Initialize state
   miro_state = Initialize;
 
