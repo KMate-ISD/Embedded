@@ -12,6 +12,7 @@ class Credentials_processor
     uint8_t* mqtt_broker;
     char* mqtt_user;
     char* mqtt_pass;
+    char* trigger;
 
     uint8_t len_wlan_psk;
     uint8_t len_wlan_ssid;
@@ -30,6 +31,9 @@ class Credentials_processor
     void set_mqtt_server(uint8_t*, uint16_t);
     void set_mqtt_creds(char*, char*);
     void set_wifi_creds(char*, uint8_t, char*, uint8_t);
+    void add_trigger(char*);
+    bool load_trigger();
+    void save_trigger();
     bool load_preferences(void);
     void save_preferences(void);
     void print_creds(void);
