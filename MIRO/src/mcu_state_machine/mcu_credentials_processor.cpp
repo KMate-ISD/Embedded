@@ -140,7 +140,7 @@ bool Credentials_processor::load_preferences()
 
   if (exist)
   {
-    this->alloc_wifi_creds(this->preferences.getUChar("len_ssid"), this->preferences.getUChar("len_psk"));
+    this->alloc_mem_wifi_creds(this->preferences.getUChar("len_ssid"), this->preferences.getUChar("len_psk"));
 
     this->mqtt_port = this->preferences.getUShort("mqtt_port");
     this->preferences.getBytes("mqtt_broker", this->mqtt_broker, 4);
