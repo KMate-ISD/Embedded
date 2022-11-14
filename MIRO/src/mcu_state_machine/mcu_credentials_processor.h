@@ -25,8 +25,8 @@ class Credentials_processor
     
     bool check_and_decode(uint8_t*);
     uint8_t check_if_preferences_has_keys(uint8_t, ...);
-    void alloc_mqtt_creds();
-    void alloc_wifi_creds(uint8_t, uint8_t);
+    void alloc_mem_mqtt_creds(void);
+    void alloc_mem_wifi_creds(uint8_t, uint8_t);
     void set_mqtt_server(uint8_t*, uint16_t);
     void set_mqtt_creds(char*, char*);
     void set_wifi_creds(char*, uint8_t, char*, uint8_t);
