@@ -6,6 +6,26 @@
 #include "soc/soc.h"
 #include "soc/rtc_cntl_reg.h"
 
+// Unique per node
+#define REED
+
+#ifdef REED
+#define UQ_NODE             "REED"
+#define UQ_TOPIC_CONF       "config/REED"
+#define UQ_TOPIC_DATA       "data/REED"
+#define UQ_TOPIC_TRIG       "trigger/REED"
+#elif defined(CAM)
+#define UQ_NODE             "CAM"
+#define UQ_TOPIC_CONF       "config/CAM"
+#define UQ_TOPIC_DATA       "data/CAM"
+#define UQ_TOPIC_TRIG       "trigger/CAM"
+#elif defined(SDLEV)
+#define UQ_NODE             "SDLEV"
+#define UQ_TOPIC_CONF       "config/SDLEV"
+#define UQ_TOPIC_DATA       "data/SDLEV"
+#define UQ_TOPIC_TRIG       "trigger/SDLEV"
+#endif
+
 
 /*
  * GLOBAL
@@ -161,7 +181,7 @@ void loop()
         // config/data
         // config/trigger
         if (!(++c % 8)) { switch_to_normal(); }
-        mqtt_client->publish("config/trigger", "REED");
+        mqtt_client->publish("config/trigger", UQ_NODE);
         t0 = td;
       }
       break;
@@ -284,7 +304,7 @@ bool mqtt_connect()
     mqtt_client->subscribe("admin/debug");
     mqtt_client->subscribe("config/data");
     mqtt_client->subscribe("config/trigger");
-    mqtt_client->subscribe("trigger/REED");
+    mqtt_client->subscribe(UQ_TOPIC_TRIG);
 
     Serial.print(proc.mqtt_user);
     Serial.println(" connected.");
@@ -324,7 +344,7 @@ void on_message(const char* topic, byte* msg, uint8_t len)
     switch_to_normal();
   }
 
-  if (miro_state == Transmit && !strcmp(topic, "trigger/REED"))
+  if (miro_state == Transmit && !strcmp(topic, UQ_TOPIC_TRIG))
   {
     if (!strcmp(buf, "GOTCHA"))
     {
