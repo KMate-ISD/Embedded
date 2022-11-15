@@ -25,6 +25,9 @@
 #define RF_SS                 21
 #endif
 
+#define REED_RELAY            32
+#define REED_LED              33
+
 #define TIMER0                0
 #define TIMER1                1
 #define RW_MODE               false

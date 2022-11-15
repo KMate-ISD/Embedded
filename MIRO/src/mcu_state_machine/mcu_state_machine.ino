@@ -53,6 +53,9 @@ bool btn_state;
 bool led_state              = false;            // Status of on board LED
 uint8_t switch_state        = sw_normal;        // Toggle Normal op., Receive and Transmit states
 
+  // Nodes
+bool relay_status;                              // Reed relay node
+
   // Timer
 bool autoreload             = true;
 bool edge                   = true;
@@ -88,6 +91,8 @@ void on_message(const char*, byte*, uint8_t);
 void print_state(void);
 void setup();
 void loop();
+
+void update_reed_status(void);
 
 void IRAM_ATTR ISR(void);
 void IRAM_ATTR on_alarm_cycle(void);
@@ -141,6 +146,12 @@ void setup()
     // Peripherals
   pinMode(LED, OUTPUT);
   pinMode(BTN, INPUT);
+#ifdef REED
+  pinMode(REED_RELAY, INPUT);
+  pinMode(REED_LED, OUTPUT);
+  relay_status = digitalRead(REED_RELAY);
+  digitalWrite(REED_LED, relay_status);
+#endif
 
     // Interrupts
   attachInterrupt(BTN, ISR, CHANGE);
@@ -185,6 +196,7 @@ void loop()
   switch (miro_state)
   {
     case Normal_op:
+      if (relay_status != digitalRead(REED_RELAY)) { update_reed_status(); }
       break;
 
     case Transmit:
@@ -499,6 +511,22 @@ bool read_credentials()
   }
 
   return(data_structure_appropriate);
+}
+
+
+/*
+ * Nodes
+ */
+
+void update_reed_status()
+{
+  relay_status =! relay_status;
+  digitalWrite(REED_LED, !relay_status);
+  if (!relay_status)
+  {
+    mqtt_client->publish(UQ_TOPIC_TRIG, "FIRE");
+    DEBUG(Serial.println("Door open."))
+  }
 }
 
 
