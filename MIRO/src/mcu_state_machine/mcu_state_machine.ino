@@ -42,6 +42,7 @@ uint8_t old_switch_state    = sw_normal;
 bool held                   = false;            // Pushbutton is held
 bool debug                  = true;             // Display detailed info via Serial
 bool config_exists          = false;            // Config loaded from NVM
+bool trigger_exists         = false;            // Trigger loaded from NVM
 uint8_t miro_state          = Undefined;        // State of operation
 uint8_t c                   = 0;                // General purpose counter
 size_t t0                   = 0;                // Initial time
@@ -99,6 +100,7 @@ void IRAM_ATTR on_alarm_span(void);
 
 void setup()
 {
+    // Disable brownout warning
   WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0);
 
     // [0] Begin with Initialize state
@@ -124,6 +126,16 @@ void setup()
   else
   {
     DEBUG(Serial.println("No valid configuration found. Entering listening mode."))
+  }
+
+  if (trigger_exists = proc.load_trigger())
+  {
+    Serial.print("Trigger loaded from NVM: ");
+    Serial.println(proc.trigger + 1);
+  }
+  else
+  {
+    Serial.println("Warning! No triggers found.");
   }
 
     // Peripherals
@@ -293,23 +305,34 @@ bool mqtt_connect()
 
   if (ret)
   {
-    char* topic = new char[10]();
-    
-    snprintf(topic, 10, "auth/%s", proc.mqtt_user);
+    char* topic_auth = new char[10]();
+    snprintf(topic_auth, 10, "auth/%s", proc.mqtt_user);
     DEBUG(
       Serial.print("Publishing IMALIVE message to ");
-      Serial.println(topic))
-    mqtt_client->publish(topic, "IMALIVE");
+      Serial.println(topic_auth))
+    mqtt_client->publish(topic_auth, "IMALIVE");
+    delete[] topic_auth;
 
     mqtt_client->subscribe("admin/debug");
     mqtt_client->subscribe("config/data");
     mqtt_client->subscribe("config/trigger");
     mqtt_client->subscribe(UQ_TOPIC_TRIG);
 
+    if (trigger_exists)
+    {
+      char* topic_trig = new char[8 + *proc.trigger]();
+      memcpy(topic_trig, "trigger/", 8);
+      memcpy(topic_trig + 8, proc.trigger + 1, *proc.trigger);
+      mqtt_client->subscribe(topic_trig);
+      DEBUG(
+        Serial.print("Subscribed to ");
+        Serial.println(topic_trig);
+      )
+      delete[] topic_trig;
+    }
+
     Serial.print(proc.mqtt_user);
     Serial.println(" connected.");
-    
-    delete[] topic;
   }
 
   return(ret);
@@ -334,6 +357,15 @@ void on_message(const char* topic, byte* msg, uint8_t len)
 
   if (miro_state == Receive && !strcmp(topic, "config/trigger"))
   {
+    if (trigger_exists)
+    {
+      char* topic_trig_old = (char*)malloc((8 + *proc.trigger)*sizeof(char));
+      memcpy(topic_trig_old, "trigger/", 8);
+      memcpy(topic_trig_old + 8, proc.trigger + 1, *proc.trigger);
+      mqtt_client->unsubscribe(topic_trig_old);
+      free(topic_trig_old);
+    }
+
     proc.add_trigger(buf);
     DEBUG(
       Serial.print(proc.trigger + 1);
@@ -341,7 +373,26 @@ void on_message(const char* topic, byte* msg, uint8_t len)
       Serial.print((uint8_t)*proc.trigger);
       Serial.println(")");
     )
+
+    char* topic_trig = (char*)malloc((8 + *proc.trigger)*sizeof(char));
+    memcpy(topic_trig, "trigger/", 8);
+    memcpy(topic_trig + 8, proc.trigger + 1, *proc.trigger);
+    mqtt_client->subscribe(topic_trig);
+    DEBUG(
+      Serial.print("Subscribed to ");
+      Serial.println(topic_trig)
+    )
+    proc.save_trigger();
+    DEBUG(
+      Serial.print("New trigger saved to NVM: ");
+      Serial.println(buf);
+    )
+
+    mqtt_client->publish(topic_trig, "GOTCHA");
+
+    trigger_exists = true;
     switch_to_normal();
+    free(topic_trig);
   }
 
   if (miro_state == Transmit && !strcmp(topic, UQ_TOPIC_TRIG))
