@@ -128,17 +128,16 @@ void Credentials_processor::set_wifi_creds(char* wlan_ssid, uint8_t len_wlan_ssi
   memcpy(this->wlan_psk, wlan_psk, this->len_wlan_psk);
 }
 
-void Credentials_processor::add_trigger(char* topic)
+void Credentials_processor::add_trigger(char* trigger)
 {
   delete[] this->trigger;
   
   int i = 0;
-  while (*(topic + i++)) { }
+  while (*(trigger + i++)) { }
 
-  this->trigger = new char[i]();
-  
+  this->trigger = new char[i + 1]();
   *(this->trigger) = i;
-  memcpy(this->trigger + 1, topic, i);
+  memcpy(this->trigger + 1, trigger, i);
 }
 
 bool Credentials_processor::load_trigger()
@@ -148,9 +147,9 @@ bool Credentials_processor::load_trigger()
   bool exist = this->preferences.isKey("trigger");
   if (exist)
   {
-    uint8_t len = this->preferences.getUChar("trigger");
-    this->trigger = new char[len]();
-    this->preferences.getString("trigger", this->trigger + 1);
+    uint8_t len = this->preferences.getUChar("len_trigger");
+    this->trigger = new char[len + 1]();
+    this->preferences.getString("trigger", this->trigger + 1, len);
     *(this->trigger) = len;
   }
 
@@ -161,7 +160,8 @@ bool Credentials_processor::load_trigger()
 void Credentials_processor::save_trigger()
 {
   this->preferences.begin("miro_creds", RW_MODE);
-  this->preferences.putString("trigger", this->trigger);
+  this->preferences.putString("trigger", this->trigger + 1);
+  this->preferences.putUChar("len_trigger", *(this->trigger));
   this->preferences.end();
 }
 
