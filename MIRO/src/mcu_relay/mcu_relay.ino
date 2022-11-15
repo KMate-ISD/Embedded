@@ -4,8 +4,8 @@
 
 #define DEBUG_MODE  1
 
-#define REED_RELAY  22
-#define STATUS_LED  23
+#define REED_RELAY  32
+#define STATUS_LED  33
 
 size_t relay_status;
 void update_status(void);
@@ -16,6 +16,8 @@ void setup() {
 
   DEBUG(Serial.begin(BAUD_RATE));
   DEBUG(while (!Serial) { });
+
+  digitalWrite(STATUS_LED, !relay_status);
 }
 
 void loop() {
@@ -24,6 +26,7 @@ void loop() {
 
 void update_status()
 {
-  digitalWrite(STATUS_LED, relay_status = !relay_status);
+  relay_status = !relay_status;
+  digitalWrite(STATUS_LED, !relay_status);
   DEBUG(relay_status ? Serial.println("Door closed.") : Serial.println("Door open."));
 }
