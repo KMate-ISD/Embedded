@@ -3,28 +3,9 @@
 #include "mcu_credentials_processor.h"
 #include "mcu_tag_encoder_decoder_ul.h"
 #include "mcu_state_machine.h"
+#include "mcu_reed_relay.h"
 #include "soc/soc.h"
 #include "soc/rtc_cntl_reg.h"
-
-// Unique per node
-#define REED
-
-#ifdef REED
-#define UQ_NODE             "REED"
-#define UQ_TOPIC_CONF       "config/REED"
-#define UQ_TOPIC_DATA       "data/REED"
-#define UQ_TOPIC_TRIG       "trigger/REED"
-#elif defined(CAM)
-#define UQ_NODE             "CAM"
-#define UQ_TOPIC_CONF       "config/CAM"
-#define UQ_TOPIC_DATA       "data/CAM"
-#define UQ_TOPIC_TRIG       "trigger/CAM"
-#elif defined(SDLEV)
-#define UQ_NODE             "SDLEV"
-#define UQ_TOPIC_CONF       "config/SDLEV"
-#define UQ_TOPIC_DATA       "data/SDLEV"
-#define UQ_TOPIC_TRIG       "trigger/SDLEV"
-#endif
 
 
 /*
@@ -52,9 +33,6 @@ size_t td;                                      // Measured time
 bool btn_state;
 bool led_state              = false;            // Status of on board LED
 uint8_t switch_state        = sw_normal;        // Toggle Normal op., Receive and Transmit states
-
-  // Nodes
-bool relay_status;                              // Reed relay node
 
   // Timer
 bool autoreload             = true;
@@ -92,8 +70,6 @@ void print_state(void);
 void setup();
 void loop();
 
-void update_reed_status(void);
-
 void IRAM_ATTR ISR(void);
 void IRAM_ATTR on_alarm_cycle(void);
 void IRAM_ATTR on_alarm_span(void);
@@ -115,13 +91,13 @@ void setup()
   Serial.begin(BAUD_RATE);
   SPI.begin();
   ecdc.rfid.PCD_Init();
-  DEBUG(Serial.println())
+  DEBUG(debug, Serial.println())
 
     // NVM;
   if (config_exists = proc.load_preferences())
   {
     proc.print_creds();
-    DEBUG(Serial.println("Config loaded from NVS."))
+    DEBUG(debug, Serial.println("Config loaded from NVS."))
 
       // Wifi
     init_wifi();
@@ -130,7 +106,7 @@ void setup()
   }
   else
   {
-    DEBUG(Serial.println("No valid configuration found. Entering listening mode."))
+    DEBUG(debug, Serial.println("No valid configuration found. Entering listening mode."))
   }
 
   if (trigger_exists = proc.load_trigger())
@@ -150,7 +126,7 @@ void setup()
   pinMode(REED_RELAY, INPUT);
   pinMode(REED_LED, OUTPUT);
   relay_status = digitalRead(REED_RELAY);
-  digitalWrite(REED_LED, relay_status);
+  digitalWrite(REED_LED, !relay_status);
 #endif
 
     // Interrupts
@@ -182,7 +158,7 @@ void loop()
 {
   // Common
   td = millis();
-  DEBUG(print_state())
+  DEBUG(debug, print_state())
   
   if (
     (miro_state != Reset
@@ -196,7 +172,7 @@ void loop()
   switch (miro_state)
   {
     case Normal_op:
-      if (relay_status != digitalRead(REED_RELAY)) { update_reed_status(); }
+      if (relay_status != digitalRead(REED_RELAY)) { update_reed_status(debug, mqtt_client); }
       break;
 
     case Transmit:
@@ -319,7 +295,7 @@ bool mqtt_connect()
   {
     char* topic_auth = new char[10]();
     snprintf(topic_auth, 10, "auth/%s", proc.mqtt_user);
-    DEBUG(
+    DEBUG(debug, 
       Serial.print("Publishing IMALIVE message to ");
       Serial.println(topic_auth))
     mqtt_client->publish(topic_auth, "IMALIVE");
@@ -336,7 +312,7 @@ bool mqtt_connect()
       memcpy(topic_trig, "trigger/", 8);
       memcpy(topic_trig + 8, proc.trigger + 1, *proc.trigger);
       mqtt_client->subscribe(topic_trig);
-      DEBUG(
+      DEBUG(debug, 
         Serial.print("Subscribed to ");
         Serial.println(topic_trig);
       )
@@ -379,7 +355,7 @@ void on_message(const char* topic, byte* msg, uint8_t len)
     }
 
     proc.add_trigger(buf);
-    DEBUG(
+    DEBUG(debug, 
       Serial.print(proc.trigger + 1);
       Serial.print(" added as trigger. (length: ");
       Serial.print((uint8_t)*proc.trigger);
@@ -390,12 +366,12 @@ void on_message(const char* topic, byte* msg, uint8_t len)
     memcpy(topic_trig, "trigger/", 8);
     memcpy(topic_trig + 8, proc.trigger + 1, *proc.trigger);
     mqtt_client->subscribe(topic_trig);
-    DEBUG(
+    DEBUG(debug, 
       Serial.print("Subscribed to ");
       Serial.println(topic_trig)
     )
     proc.save_trigger();
-    DEBUG(
+    DEBUG(debug, 
       Serial.print("New trigger saved to NVM: ");
       Serial.println(buf);
     )
@@ -496,12 +472,12 @@ bool read_credentials()
       uint8_t* data = (uint8_t*)malloc(len_data*sizeof(uint8_t));
       ecdc.read_blocks(data, start_block, stop_block);
       Serial.println();
-      DEBUG(ecdc.print_hex(data, len_data))
+      DEBUG(debug, ecdc.print_hex(data, len_data))
 
       if (data_structure_appropriate = proc.check_and_decode(data))
       {
         proc.save_preferences();
-        DEBUG(Serial.println("Preferences saved to NVS."))
+        DEBUG(debug, Serial.println("Preferences saved to NVS."))
       }
 
       // Safe close
@@ -511,22 +487,6 @@ bool read_credentials()
   }
 
   return(data_structure_appropriate);
-}
-
-
-/*
- * Nodes
- */
-
-void update_reed_status()
-{
-  relay_status =! relay_status;
-  digitalWrite(REED_LED, !relay_status);
-  if (!relay_status)
-  {
-    mqtt_client->publish(UQ_TOPIC_TRIG, "FIRE");
-    DEBUG(Serial.println("Door open."))
-  }
 }
 
 

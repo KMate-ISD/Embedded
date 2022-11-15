@@ -33,7 +33,27 @@
 #define RW_MODE               false
 #define RO_MODE               true
 
-#define DEBUG(a)              if (debug) { a; }
+#define DEBUG(a, b)           if (a) { b; }
+
+// Unique per node
+#define REED
+
+#ifdef REED
+#define UQ_NODE             "REED"
+#define UQ_TOPIC_CONF       "config/REED"
+#define UQ_TOPIC_DATA       "data/REED"
+#define UQ_TOPIC_TRIG       "trigger/REED"
+#elif defined(CAM)
+#define UQ_NODE             "CAM"
+#define UQ_TOPIC_CONF       "config/CAM"
+#define UQ_TOPIC_DATA       "data/CAM"
+#define UQ_TOPIC_TRIG       "trigger/CAM"
+#elif defined(SDLEV)
+#define UQ_NODE             "SDLEV"
+#define UQ_TOPIC_CONF       "config/SDLEV"
+#define UQ_TOPIC_DATA       "data/SDLEV"
+#define UQ_TOPIC_TRIG       "trigger/SDLEV"
+#endif
 
 
   // const
