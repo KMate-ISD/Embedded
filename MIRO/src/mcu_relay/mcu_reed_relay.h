@@ -1,7 +1,9 @@
+#include <PubSubClient.h>
 #include "arduino.h"
-#include "mcu_state_machine.h"
-#include "mcu_reed_relay.h"
+#include "..\mcu_state_machine\mcu_state_machine.h"
 
+
+bool relay_status;
 
 void update_reed_status(bool debug, PubSubClient* mqtt_client)
 {
