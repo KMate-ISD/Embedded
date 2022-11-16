@@ -1,0 +1,47 @@
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <meta http-equiv="refresh" content="12" />
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <style>
+            body { text-align:center; }
+            button { width: 96px;}
+            img { min-width: 300px;}
+
+            .hori{ margin-bottom: 0%; }
+            .vert { margin-bottom: 10%; }
+        </style>
+    </head>
+    <body>
+        <div id="container">
+            <h2>MIRO: Hall-CAM</h2>
+            <p>Takes a photo of the entrance as the front opens.</p>
+            <p>Shoot photos manually by pressing the 'SHOOT' button below.<br/>Shoot photos remotely by publishing "FIRE" to trigger/CAM.</p>
+            <p>
+                <button class="button" onclick="capturePhoto()">SHOOT</button>
+                <button class="button" onclick="rotatePhoto();">ROTATE</button>
+            <!-- <button onclick="location.reload();">REFRESH PAGE</button> -->
+            </p>
+        </div>
+        <div>
+            <!-- <img src="saved-photo" id="photo" width="25%"> -->
+            <img src="01.jfif" id="photo" width="25%">
+        </div>
+    </body>
+    <script>
+        var deg = 0;
+        function capturePhoto() {
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', "/capture", true);
+            xhr.send();
+        }
+        function rotatePhoto() {
+            var img = document.getElementById("photo");
+            deg += 90;
+            if(isOdd(deg/90)){ document.getElementById("container").className = "vert"; }
+            else{ document.getElementById("container").className = "hori"; }
+            img.style.transform = "rotate(" + deg + "deg)";
+        }
+        function isOdd(n) { return Math.abs(n % 2) == 1; }
+    </script>
+</html>
