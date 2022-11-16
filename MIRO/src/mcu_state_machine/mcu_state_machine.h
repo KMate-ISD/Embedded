@@ -17,16 +17,25 @@
  * MACRO
  */
 
-#define BTN                   0
-#define LED                   2
+#define CAM
+
+#ifdef CAM
+  #define SCK                 14
+  #define MISO                12
+  #define MOSI                13
+  #define SS                  15
+  #define RST                 0
+  #define LED                 4
+  #define BTN                 2
+#else
+  #define LED                 2
+  #define BTN                 0
+#endif
 
 #ifndef TAG_DECODER
 #define RF_RST                22
 #define RF_SS                 21
 #endif
-
-#define REED_RELAY            32
-#define REED_LED              33
 
 #define TIMER0                0
 #define TIMER1                1
@@ -36,23 +45,24 @@
 #define DEBUG(a, b)           if (a) { b; }
 
 // Unique per node
-#define REED
 
 #ifdef REED
-#define UQ_NODE             "REED"
-#define UQ_TOPIC_CONF       "config/REED"
-#define UQ_TOPIC_DATA       "data/REED"
-#define UQ_TOPIC_TRIG       "trigger/REED"
+#define UQ_NODE               "REED"
+#define UQ_TOPIC_CONF         "config/REED"
+#define UQ_TOPIC_DATA         "data/REED"
+#define UQ_TOPIC_TRIG         "trigger/REED"
+#define REED_RELAY            32
+#define REED_LED              33
 #elif defined(CAM)
-#define UQ_NODE             "CAM"
-#define UQ_TOPIC_CONF       "config/CAM"
-#define UQ_TOPIC_DATA       "data/CAM"
-#define UQ_TOPIC_TRIG       "trigger/CAM"
+#define UQ_NODE               "CAM"
+#define UQ_TOPIC_CONF         "config/CAM"
+#define UQ_TOPIC_DATA         "data/CAM"
+#define UQ_TOPIC_TRIG         "trigger/CAM"
 #elif defined(SDLEV)
-#define UQ_NODE             "SDLEV"
-#define UQ_TOPIC_CONF       "config/SDLEV"
-#define UQ_TOPIC_DATA       "data/SDLEV"
-#define UQ_TOPIC_TRIG       "trigger/SDLEV"
+#define UQ_NODE               "SDLEV"
+#define UQ_TOPIC_CONF         "config/SDLEV"
+#define UQ_TOPIC_DATA         "data/SDLEV"
+#define UQ_TOPIC_TRIG         "trigger/SDLEV"
 #endif
 
 

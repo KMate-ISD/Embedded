@@ -3,7 +3,11 @@
 #include "mcu_credentials_processor.h"
 #include "mcu_tag_encoder_decoder_ul.h"
 #include "mcu_state_machine.h"
-#include "C:\Computer_science\Projects\Embedded\MIRO\src\mcu_relay\mcu_reed_relay.h"
+#ifdef REED
+  #include "C:\Computer_science\Projects\Embedded\MIRO\src\mcu_relay\mcu_reed_relay.h"
+#elif defined(CAM)
+  #include "C:\Computer_science\Projects\Embedded\MIRO\src\mcu_cam\mcu_cam.h"
+#endif
 #include "soc/soc.h"
 #include "soc/rtc_cntl_reg.h"
 
@@ -46,13 +50,18 @@ hw_timer_t* timer_span;
   // Network
 WiFiClient wifi_client;
 PubSubClient* mqtt_client;
+AsyncWebServer server(80);
 
   // NVM
 Preferences preferences;
 Credentials_processor proc(preferences);
 
   // RFID
-MFRC522 rfid(RF_SS, RF_RST);
+#ifdef CAM
+  MFRC522 rfid(SS, RST);
+#else
+  MFRC522 rfid(RF_SS, RF_RST);
+#endif
 Tag_encoder_decoder ecdc(rfid);
 
 
@@ -81,6 +90,7 @@ void IRAM_ATTR on_alarm_span(void);
 
 void setup()
 {
+  Serial.println("Setup started...");
     // Disable brownout warning
   WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0);
 
@@ -89,7 +99,11 @@ void setup()
 
     // Initialize
   Serial.begin(BAUD_RATE);
+#ifdef CAM
+  SPI.begin(SCK, MISO, MOSI, SS);
+#else
   SPI.begin();
+#endif
   ecdc.rfid.PCD_Init();
   DEBUG(debug, Serial.println())
 
@@ -127,6 +141,8 @@ void setup()
   pinMode(REED_LED, OUTPUT);
   relay_status = digitalRead(REED_RELAY);
   digitalWrite(REED_LED, !relay_status);
+#elif defined(CAM)
+  if (config_exists) { setup_cam_module(server); }
 #endif
 
     // Interrupts
@@ -172,7 +188,11 @@ void loop()
   switch (miro_state)
   {
     case Normal_op:
+#ifdef REED
       if (relay_status != digitalRead(REED_RELAY)) { update_reed_status(debug, mqtt_client); }
+#elif defined(CAM)
+      shoot();
+#endif
       break;
 
     case Transmit:
@@ -341,7 +361,23 @@ void on_message(const char* topic, byte* msg, uint8_t len)
   }
   *(buf + i) = '\0';
   
-  Serial.println();
+  char* topic_trig = nullptr;
+  if (miro_state == Normal_op && trigger_exists)
+  {
+    Serial.print("\nNormal op and trigger exists: ");
+    topic_trig = new char[8 + *proc.trigger]();
+    memcpy(topic_trig, "trigger/", 8);
+    memcpy(topic_trig + 8, proc.trigger + 1, *proc.trigger);
+    
+    if (!strcmp(topic, topic_trig) && !strcmp(buf, "FIRE"))
+    {
+      Serial.println("BANG!");
+#ifdef CAM
+      shoot_next = true;
+#endif
+    }
+  }
+  if (topic_trig != nullptr) { delete[] topic_trig; }
 
   if (miro_state == Receive && !strcmp(topic, "config/trigger"))
   {
