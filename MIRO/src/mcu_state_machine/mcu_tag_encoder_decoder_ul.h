@@ -3,10 +3,6 @@
 
 #include <MFRC522.h>
 
-/* Wiring */
-#define RF_SS                 21
-#define RF_RST                22
-
 /* UL tag
  * -------------------------
  * Page 0 b0-2  UID
