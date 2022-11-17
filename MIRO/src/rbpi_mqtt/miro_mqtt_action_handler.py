@@ -8,7 +8,7 @@ class Miro_mqtt_action_handler(Miro_mqtt_client_handler):
     def __init__(self, broker_ip, port, *topics) -> None:
         super().__init__(broker_ip, port, *topics)
         self.last_msgs = dict()
-        # os.system(f"sudo chown kmate /run/mosquitto")
+        os.system(f"sudo chmod 777 /run/mosquitto/")
     
     def on_message(self, client, userdata, msg):
         super().on_message(client, userdata, msg)
