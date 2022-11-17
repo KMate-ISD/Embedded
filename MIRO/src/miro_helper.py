@@ -5,7 +5,7 @@ DEBUG = 1
 
 class Miro_helper():
     mosquitto_config = "/etc/mosquitto/mosquitto.conf"
-    passwordfile = "/etc/mosquitto/pwfile"
+    passwordfile = "/etc/mosquitto/passwd"
     pid_path = "/run/mosquitto/"
     pid_file = "mosquitto.pid"
     wifi_details = "/etc/wpa_supplicant/wpa_supplicant.conf"
