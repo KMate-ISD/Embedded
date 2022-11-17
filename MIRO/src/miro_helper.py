@@ -40,7 +40,7 @@ class Miro_helper():
     def get_port(cls):
         with open(cls.mosquitto_config, 'r') as file:
             lines = file.readlines()
-        listener = [line for line in lines if "listener" in line]
+        listener = [line for line in lines if line.startswith("listener")]
         return(int(next(iter(listener)).split(' ')[-1].strip()))
     
     @classmethod
