@@ -17,7 +17,7 @@
  * MACRO
  */
 
-#define CAM
+#define REED
 
 #ifdef CAM
   #define SCK                 14
@@ -28,13 +28,10 @@
   #define LED                 4
   #define BTN                 2
 #else
+  #define RF_RST              22
+  #define RF_SS               21
   #define LED                 2
   #define BTN                 0
-#endif
-
-#ifndef TAG_DECODER
-#define RF_RST                22
-#define RF_SS                 21
 #endif
 
 #define TIMER0                0

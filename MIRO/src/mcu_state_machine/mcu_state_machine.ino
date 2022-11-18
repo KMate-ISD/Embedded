@@ -50,7 +50,9 @@ hw_timer_t* timer_span;
   // Network
 WiFiClient wifi_client;
 PubSubClient* mqtt_client;
-AsyncWebServer server(80);
+#ifdef CAM
+  AsyncWebServer server(80);
+#endif
 
   // NVM
 Preferences preferences;
