@@ -362,6 +362,7 @@ void on_message(const char* topic, byte* msg, uint8_t len)
     *(buf + i) = (const char)*(msg + i);
   }
   *(buf + i) = '\0';
+  Serial.println();
   
   char* topic_trig = nullptr;
   if (miro_state == Normal_op && trigger_exists)
