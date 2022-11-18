@@ -311,7 +311,7 @@ bool keep_mqtt_connected()
 bool mqtt_connect()
 {
   Serial.print("Connecting to MQTT broker... ");
-  bool ret = mqtt_client->connect("ESP32Client", proc.mqtt_user, proc.mqtt_pass);
+  bool ret = mqtt_client->connect(UQ_NODE, proc.mqtt_user, proc.mqtt_pass);
 
   if (ret)
   {
