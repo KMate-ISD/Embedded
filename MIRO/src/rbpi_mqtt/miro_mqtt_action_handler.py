@@ -3,6 +3,7 @@ import random
 import subprocess
 from src.rbpi_mqtt.miro_mqtt_client_handler import Miro_mqtt_client_handler
 from src.miro_helper import Miro_helper
+from src.rbpi_dashboard.mshs_dash import Mshs_dash
 
 class Miro_mqtt_action_handler(Miro_mqtt_client_handler):
     def __init__(self, broker_ip, port, *topics) -> None:
@@ -12,6 +13,9 @@ class Miro_mqtt_action_handler(Miro_mqtt_client_handler):
     
     def on_message(self, client, userdata, msg):
         super().on_message(client, userdata, msg)
+        if "data/" in msg.topic:
+            Mshs_dash.upload_to_dashboard(msg.payload[0], msg.payload[1:])
+            pass
         self.last_msgs.update({msg.topic: msg.payload})
     
     def generate_credentials(self, i=4):

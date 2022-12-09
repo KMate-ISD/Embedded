@@ -9,6 +9,7 @@ class Miro_helper():
     pid_path = "/run/mosquitto/"
     pid_file = "mosquitto.pid"
     wifi_details = "/etc/wpa_supplicant/wpa_supplicant.conf"
+    ThingSpeak_API_key = "9DIN8SPGW71TKIYD"
 
 # STATIC
     @staticmethod

@@ -1,17 +1,13 @@
-from time import sleep
 import urllib.request as url
+from src.miro_helper import Miro_helper
 
-ts_write = 'https://api.thingspeak.com/update?api_key=9DIN8SPGW71TKIYD&field'
-field = 5
+class Mshs_dash():
+  @staticmethod
+  def upload_to_dashboard(field, value):
+    ts_write = f'https://api.thingspeak.com/update?api_key={Miro_helper.ThingSpeak_API_key}&field'
+    u = url.urlopen(f"{ts_write}{field}={value}")
+    
+    ret = u.read()
+    u.close()
 
-print("Type 'qq' to exit the program.")
-value = input("Type a value to update the dashboard.\n")
-
-while (value != "qq"):
-  u = url.urlopen(f"{ts_write}{field}={value}")
-  print(u.read())
-  u.close()
-
-  value = input()
-
-print("Run concluded. Bye!")
+    return(ret)
