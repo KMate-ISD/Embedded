@@ -1,5 +1,6 @@
 #include <PubSubClient.h>
 #include <WiFi.h>
+#include <cmath>
 #include "mcu_credentials_processor.h"
 #include "mcu_tag_encoder_decoder_ul.h"
 #include "mcu_state_machine.h"
@@ -7,9 +8,21 @@
   #include "C:\Computer_science\Projects\Embedded\MIRO\src\mcu_relay\mcu_reed_relay.h"
 #elif defined(CAM)
   #include "C:\Computer_science\Projects\Embedded\MIRO\src\mcu_cam\mcu_cam.h"
+#elif defined(PTX)
+  #include "C:\Computer_science\Projects\Embedded\MIRO\src\mcu_ptrans\mcu_ptrans.h"
 #endif
 #include "soc/soc.h"
 #include "soc/rtc_cntl_reg.h"
+
+
+  // Client Node type
+#if defined(REED)
+uint8_t cn_type = cn_trigger;
+#elif defined(CAM) || defined(LIGHT)
+uint8_t cn_type = cn_action;
+#elif defined(SDLEV) || defined(PTX)
+uint8_t cn_type = cn_data;
+#endif
 
 
 /*
@@ -30,13 +43,21 @@ bool config_exists          = false;            // Config loaded from NVM
 bool trigger_exists         = false;            // Trigger loaded from NVM
 uint8_t miro_state          = Undefined;        // State of operation
 uint8_t c                   = 0;                // General purpose counter
-size_t t0                   = 0;                // Initial time
+size_t t0a                  = 0;                // Initial time
+size_t t0b                  = 0;                // 
+size_t t0m                  = 0;                // 
 size_t td;                                      // Measured time
 
   // Peripherals
 bool btn_state;
 bool led_state              = false;            // Status of on board LED
 uint8_t switch_state        = sw_normal;        // Toggle Normal op., Receive and Transmit states
+bool cn_trigger_prev        = false;
+bool cn_trigger_curr        = false;
+uint8_t cn_data_div         = 24;
+uint8_t cn_data_items       = 0;
+size_t cn_data_curr         = 0;
+size_t cn_data_cache        = 0;
 
   // Timer
 bool autoreload             = true;
@@ -76,6 +97,7 @@ void init_mqtt(void);
 void init_timer(void);
 void init_wifi(void);
 bool mqtt_connect(void);
+bool keep_mqtt_connected(void);
 void on_message(const char*, byte*, uint8_t);
 void print_state(void);
 void setup();
@@ -135,6 +157,29 @@ void setup()
     Serial.println("Warning! No triggers found.");
   }
 
+  if (cn_type == cn_data)
+  {
+    Serial.println("Data type node found.");
+    if (proc.load_treshold())
+    {
+      Serial.print("Treshold set to: ");
+      Serial.println(proc.treshold);
+    }
+    else
+    {
+      Serial.println("No treshold set.");
+    }
+    if(proc.load_field())
+    {
+      Serial.print("Uploading data to dashboard field ");
+      Serial.println(proc.field);
+    }
+    else
+    {
+      Serial.println("No dashboard field number given.\nData will not be uploaded.");
+    }
+  }
+
     // Peripherals
   pinMode(LED, OUTPUT);
   pinMode(BTN, INPUT);
@@ -145,6 +190,8 @@ void setup()
   digitalWrite(REED_LED, !relay_status);
 #elif defined(CAM)
   if (config_exists) { setup_cam_module(server); }
+#elif defined(PTX)
+  pinMode(PTX_IN, INPUT);
 #endif
 
     // Interrupts
@@ -164,7 +211,7 @@ void setup()
   }
 
     // So commands depending on time delta would run once after Init no matter what
-  t0 = millis() - REST;
+  t0b = t0a = millis() - REST;
 }
 
 
@@ -190,21 +237,46 @@ void loop()
   switch (miro_state)
   {
     case Normal_op:
-#ifdef REED
-      if (relay_status != digitalRead(REED_RELAY)) { update_reed_status(debug, mqtt_client); }
-#elif defined(CAM)
-      shoot();
-#endif
+      #ifdef REED
+        if (relay_status != digitalRead(REED_RELAY)) { update_reed_status(debug, mqtt_client); }
+      #elif defined(CAM)
+        shoot();
+      #elif defined(PTX)
+        if (td - t0m > REST/cn_data_div)
+        {
+          cn_data_cache += cn_data_curr = take_measurement_ptx(mqtt_client, PTX_IN);
+          cn_data_items++;
+          t0m = td;
+        }
+        if (proc.treshold)
+        {
+          cn_trigger_curr = proc.direction*cn_data_curr > proc.direction*proc.treshold;
+          if (cn_trigger_curr != cn_trigger_prev)
+          {
+            if (cn_trigger_curr) { mqtt_client->publish(UQ_TOPIC_TRIG, "FIRE"); }
+            else { mqtt_client->publish(UQ_TOPIC_TRIG, "HALT"); }
+            cn_trigger_prev = cn_trigger_curr;
+            publish_measurement(debug, proc.field, mqtt_client);
+          }
+        }
+        if (td - t0b > REST)
+        {
+          pt_value = cn_data_cache/cn_data_items;
+          cn_data_cache = cn_data_items = 0;
+          publish_measurement(debug, proc.field, mqtt_client);
+          t0b = td;
+        }
+      #endif
       break;
 
     case Transmit:
-      if (td - t0 > REST/3)
+      if (td - t0a > REST/3)
       {
         // config/data
         // config/trigger
         if (!(++c % 8)) { switch_to_normal(); }
         mqtt_client->publish("config/trigger", UQ_NODE);
-        t0 = td;
+        t0a = td;
       }
       break;
 
@@ -286,7 +358,7 @@ bool keep_mqtt_connected()
 {
   bool ret = false;
 
-  if (!mqtt_client->connected() && td - t0 > REST)
+  if (!mqtt_client->connected() && td - t0a > REST)
   {
     if (ret = !mqtt_connect())
     {
@@ -296,7 +368,7 @@ bool keep_mqtt_connected()
       Serial.print(REST/1000);
       Serial.println(" seconds.");
     }
-    t0 = td;
+    t0a = td;
     ret = !ret;
   }
   else
@@ -324,8 +396,7 @@ bool mqtt_connect()
     delete[] topic_auth;
 
     mqtt_client->subscribe("admin/debug");
-    mqtt_client->subscribe("config/data");
-    mqtt_client->subscribe("config/trigger");
+    mqtt_client->subscribe("config/#");
     mqtt_client->subscribe(UQ_TOPIC_TRIG);
 
     if (trigger_exists)
@@ -382,44 +453,84 @@ void on_message(const char* topic, byte* msg, uint8_t len)
   }
   if (topic_trig != nullptr) { delete[] topic_trig; }
 
-  if (miro_state == Receive && !strcmp(topic, "config/trigger"))
+  if (miro_state == Receive)
   {
-    if (trigger_exists)
+    if (!strcmp(topic, "config/trigger"))
     {
-      char* topic_trig_old = (char*)malloc((8 + *proc.trigger)*sizeof(char));
-      memcpy(topic_trig_old, "trigger/", 8);
-      memcpy(topic_trig_old + 8, proc.trigger + 1, *proc.trigger);
-      mqtt_client->unsubscribe(topic_trig_old);
-      free(topic_trig_old);
+      if (trigger_exists)
+      {
+        char* topic_trig_old = (char*)malloc((8 + *proc.trigger)*sizeof(char));
+        memcpy(topic_trig_old, "trigger/", 8);
+        memcpy(topic_trig_old + 8, proc.trigger + 1, *proc.trigger);
+        mqtt_client->unsubscribe(topic_trig_old);
+        free(topic_trig_old);
+      }
+
+      proc.add_trigger(buf);
+      DEBUG(debug, 
+        Serial.print(proc.trigger + 1);
+        Serial.print(" added as trigger. (length: ");
+        Serial.print((uint8_t)*proc.trigger);
+        Serial.println(")");
+      )
+
+      char* topic_trig = (char*)malloc((8 + *proc.trigger)*sizeof(char));
+      memcpy(topic_trig, "trigger/", 8);
+      memcpy(topic_trig + 8, proc.trigger + 1, *proc.trigger);
+      mqtt_client->subscribe(topic_trig);
+      DEBUG(debug, 
+        Serial.print("Subscribed to ");
+        Serial.println(topic_trig)
+      )
+      proc.save_trigger();
+      DEBUG(debug, 
+        Serial.print("New trigger saved to NVM: ");
+        Serial.println(buf);
+      )
+
+      mqtt_client->publish(topic_trig, "GOTCHA");
+
+      trigger_exists = true;
+      switch_to_normal();
+      free(topic_trig);
     }
+    else if (!strcmp(topic, "config/data/field"))
+    {
+      uint8_t field = 0;
+      field = *buf - 48;
 
-    proc.add_trigger(buf);
-    DEBUG(debug, 
-      Serial.print(proc.trigger + 1);
-      Serial.print(" added as trigger. (length: ");
-      Serial.print((uint8_t)*proc.trigger);
-      Serial.println(")");
-    )
+      proc.set_field(field);
+      proc.save_field();
+      DEBUG(debug,
+        Serial.print("field set to ");
+        Serial.println(proc.field);
+      )
 
-    char* topic_trig = (char*)malloc((8 + *proc.trigger)*sizeof(char));
-    memcpy(topic_trig, "trigger/", 8);
-    memcpy(topic_trig + 8, proc.trigger + 1, *proc.trigger);
-    mqtt_client->subscribe(topic_trig);
-    DEBUG(debug, 
-      Serial.print("Subscribed to ");
-      Serial.println(topic_trig)
-    )
-    proc.save_trigger();
-    DEBUG(debug, 
-      Serial.print("New trigger saved to NVM: ");
-      Serial.println(buf);
-    )
+      switch_to_normal();
+    }
+    else if (!strcmp(topic, "config/data/treshold"))
+    {
+      int8_t direction = 1;
+      size_t tresh = 0;
+      int i;
+      for (i = len - 1; i > 0; i--)
+      {
+        tresh += (*(buf + i) - 48) * pow(10, len - (i + 1));
+      }
+      direction = *(buf + i) - 48;
+      if (direction) { direction = -1; } else { direction = 1; } // 1: reverse, 0: normal
 
-    mqtt_client->publish(topic_trig, "GOTCHA");
+      proc.set_treshold(direction, tresh);
+      proc.save_treshold();
+      DEBUG(debug,
+        Serial.print("Treshold set to ");
+        Serial.println(proc.treshold);
+        Serial.print("Direction is ");
+        Serial.println(proc.direction);
+      )
 
-    trigger_exists = true;
-    switch_to_normal();
-    free(topic_trig);
+      switch_to_normal();
+    }
   }
 
   if (miro_state == Transmit && !strcmp(topic, UQ_TOPIC_TRIG))

@@ -7,6 +7,8 @@ Credentials_processor::Credentials_processor(Preferences& preferences)
   : preferences { preferences }
 {
   this->alloc_mem_mqtt_creds();
+  this->treshold = 0;
+  this->field = 0;
 }
 
 Credentials_processor::~Credentials_processor()
@@ -126,6 +128,49 @@ void Credentials_processor::set_wifi_creds(char* wlan_ssid, uint8_t len_wlan_ssi
   alloc_mem_wifi_creds(len_wlan_ssid, len_wlan_psk);
   memcpy(this->wlan_ssid, wlan_ssid, this->len_wlan_ssid);
   memcpy(this->wlan_psk, wlan_psk, this->len_wlan_psk);
+}
+
+void Credentials_processor::set_field(uint8_t field)
+{
+  this->field = field;
+}
+
+size_t Credentials_processor::load_field()
+{
+  this->preferences.begin("miro_creds", RO_MODE);
+  this->field = this->preferences.getShort("field");
+  this->preferences.end();
+  return(this->field);
+}
+
+void Credentials_processor::save_field()
+{
+  this->preferences.begin("miro_creds", RW_MODE);
+  this->preferences.putShort("field", this->field);
+  this->preferences.end();
+}
+
+void Credentials_processor::set_treshold(int8_t direction, size_t treshold)
+{
+  this->direction = direction;
+  this->treshold = treshold;
+}
+
+size_t Credentials_processor::load_treshold()
+{
+  this->preferences.begin("miro_creds", RO_MODE);
+  this->direction = this->preferences.getChar("direction");
+  this->treshold = this->preferences.getShort("treshold");
+  this->preferences.end();
+  return(this->treshold);
+}
+
+void Credentials_processor::save_treshold()
+{
+  this->preferences.begin("miro_creds", RW_MODE);
+  this->preferences.putChar("direction", this->direction);
+  this->preferences.putShort("treshold", this->treshold);
+  this->preferences.end();
 }
 
 void Credentials_processor::add_trigger(char* trigger)

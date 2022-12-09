@@ -17,7 +17,7 @@
  * MACRO
  */
 
-#define REED
+#define PTX
 
 #ifdef CAM
   #define SCK                 14
@@ -60,6 +60,12 @@
 #define UQ_TOPIC_CONF         "config/SDLEV"
 #define UQ_TOPIC_DATA         "data/SDLEV"
 #define UQ_TOPIC_TRIG         "trigger/SDLEV"
+#elif defined(PTX)
+#define UQ_NODE               "PTX"
+#define UQ_TOPIC_CONF         "config/PTX"
+#define UQ_TOPIC_DATA         "data/PTX"
+#define UQ_TOPIC_TRIG         "trigger/PTX"
+#define PTX_IN                36
 #endif
 
 
@@ -92,6 +98,14 @@ enum Switch_state
   sw_normal,
   sw_transmit,
   sw_receive
+};
+
+enum CN_type
+{
+  cn_default,
+  cn_trigger,
+  cn_action,
+  cn_data
 };
 
 
