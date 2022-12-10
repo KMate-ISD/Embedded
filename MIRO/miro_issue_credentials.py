@@ -179,6 +179,7 @@ try:
         btn, rgb, rc, rfid, mqtt = setup(args)
         is_busy = False
         start_listener()
+        mqtt.subscribe("data/#")
 
         btn.add_handler(next(iter(btn.pins)), GPIO.RISING, write_creds_to_tag)
 

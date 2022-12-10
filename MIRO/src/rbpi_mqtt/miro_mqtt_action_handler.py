@@ -14,8 +14,7 @@ class Miro_mqtt_action_handler(Miro_mqtt_client_handler):
     def on_message(self, client, userdata, msg):
         super().on_message(client, userdata, msg)
         if "data/" in msg.topic:
-            Mshs_dash.upload_to_dashboard(msg.payload[0], msg.payload[1:])
-            pass
+            print(Mshs_dash.upload_to_dashboard(msg.payload[0] - 48, msg.payload[1:].decode('utf-8')))
         self.last_msgs.update({msg.topic: msg.payload})
     
     def generate_credentials(self, i=4):

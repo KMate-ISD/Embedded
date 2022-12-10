@@ -7,7 +7,7 @@ class Mshs_dash():
     ts_write = f'https://api.thingspeak.com/update?api_key={Miro_helper.ThingSpeak_API_key}&field'
     u = url.urlopen(f"{ts_write}{field}={value}")
     
-    ret = u.read()
+    ret = f'ret: {u.read()}\nfield: {field}\nvalue: {value}'
     u.close()
 
     return(ret)
