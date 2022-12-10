@@ -259,7 +259,7 @@ void loop()
             publish_measurement(debug, proc.field, mqtt_client);
           }
         }
-        if (td - t0b > REST)
+        if (td - t0b > REST*5)
         {
           pt_value = cn_data_cache/cn_data_items;
           cn_data_cache = cn_data_items = 0;
@@ -446,8 +446,10 @@ void on_message(const char* topic, byte* msg, uint8_t len)
     if (!strcmp(topic, topic_trig) && !strcmp(buf, "FIRE"))
     {
       Serial.println("BANG!");
-#ifdef CAM
+#if defined(CAM)
       shoot_next = true;
+#elif defined(PTX)
+      publish_measurement(debug, proc.field, mqtt_client);
 #endif
     }
   }
