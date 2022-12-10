@@ -17,7 +17,7 @@
  * MACRO
  */
 
-#define PTX
+#define LIGHT
 
 #ifdef CAM
   #define SCK                 14
@@ -50,6 +50,12 @@
 #define UQ_TOPIC_TRIG         "trigger/REED"
 #define REED_RELAY            32
 #define REED_LED              33
+#elif defined(LIGHT)
+#define UQ_NODE               "LIGHT"
+#define UQ_TOPIC_CONF         "config/LIGHT"
+#define UQ_TOPIC_DATA         "data/LIGHT"
+#define UQ_TOPIC_TRIG         "trigger/LIGHT"
+#define ACTUATOR              32
 #elif defined(CAM)
 #define UQ_NODE               "CAM"
 #define UQ_TOPIC_CONF         "config/CAM"

@@ -6,6 +6,8 @@
 #include "mcu_state_machine.h"
 #ifdef REED
   #include "C:\Computer_science\Projects\Embedded\MIRO\src\mcu_relay\mcu_reed_relay.h"
+#elif defined(LIGHT)
+  #include "C:\Computer_science\Projects\Embedded\MIRO\src\mcu_light\mcu_light.h"
 #elif defined(CAM)
   #include "C:\Computer_science\Projects\Embedded\MIRO\src\mcu_cam\mcu_cam.h"
 #elif defined(SDLEV)
@@ -194,10 +196,15 @@ void setup()
   digitalWrite(REED_LED, !relay_status);
 #elif defined(CAM)
   if (config_exists) { setup_cam_module(server); }
+#elif defined(LIGHT)
+  pinMode(ACTUATOR, OUTPUT);
 #elif defined(TEMP)
   dht.begin();
 #endif
+
+#ifndef LIGHT
   if (cn_type == cn_data) { pinMode(SENSOR_IN, INPUT); }
+#endif
 
     // Interrupts
   attachInterrupt(BTN, ISR, CHANGE);
@@ -246,6 +253,8 @@ void loop()
         if (relay_status != digitalRead(REED_RELAY)) { update_reed_status(debug, mqtt_client); }
       #elif defined(CAM)
         shoot();
+      #elif defined(LIGHT)
+        actuate(ACTUATOR);
       #elif cn_type == cn_data
         if (td - t0m > REST/cn_data_div)
         {
@@ -462,8 +471,16 @@ void on_message(const char* topic, byte* msg, uint8_t len)
       Serial.println("BANG!");
 #if defined(CAM)
       shoot_next = true;
+#elif defined(LIGHT)
+      toggle_off = true;
 #elif cn_type == cn_data
       publish_measurement(debug, proc.field, mqtt_client);
+#endif
+    }
+    else if (!strcmp(topic, topic_trig) && !strcmp(buf, "HALT"))
+    {
+#if defined(LIGHT)
+      toggle_on = true;
 #endif
     }
   }
