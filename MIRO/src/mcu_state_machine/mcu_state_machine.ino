@@ -10,6 +10,8 @@
   #include "C:\Computer_science\Projects\Embedded\MIRO\src\mcu_cam\mcu_cam.h"
 #elif defined(PTX)
   #include "C:\Computer_science\Projects\Embedded\MIRO\src\mcu_ptrans\mcu_ptrans.h"
+#elif defined(TEMP)
+  #include "C:\Computer_science\Projects\Embedded\MIRO\src\mcu_temp\mcu_temp.h"
 #endif
 #include "soc/soc.h"
 #include "soc/rtc_cntl_reg.h"
@@ -20,7 +22,7 @@
 uint8_t cn_type = cn_trigger;
 #elif defined(CAM) || defined(LIGHT)
 uint8_t cn_type = cn_action;
-#elif defined(SDLEV) || defined(PTX)
+#elif defined(SDLEV) || defined(PTX) || defined(TEMP)
 uint8_t cn_type = cn_data;
 #endif
 
@@ -54,7 +56,7 @@ bool led_state              = false;            // Status of on board LED
 uint8_t switch_state        = sw_normal;        // Toggle Normal op., Receive and Transmit states
 bool cn_trigger_prev        = false;
 bool cn_trigger_curr        = false;
-uint8_t cn_data_div         = 24;
+uint8_t cn_data_div         = 2;
 uint8_t cn_data_items       = 0;
 size_t cn_data_curr         = 0;
 size_t cn_data_cache        = 0;
@@ -190,9 +192,10 @@ void setup()
   digitalWrite(REED_LED, !relay_status);
 #elif defined(CAM)
   if (config_exists) { setup_cam_module(server); }
-#elif defined(PTX)
-  pinMode(PTX_IN, INPUT);
+#elif defined(TEMP)
+  dht.begin();
 #endif
+  if (cn_type == cn_data) { pinMode(SENSOR_IN, INPUT); }
 
     // Interrupts
   attachInterrupt(BTN, ISR, CHANGE);
@@ -241,10 +244,10 @@ void loop()
         if (relay_status != digitalRead(REED_RELAY)) { update_reed_status(debug, mqtt_client); }
       #elif defined(CAM)
         shoot();
-      #elif defined(PTX)
+      #elif cn_type == cn_data
         if (td - t0m > REST/cn_data_div)
         {
-          cn_data_cache += cn_data_curr = take_measurement_ptx(mqtt_client, PTX_IN);
+          cn_data_cache += cn_data_curr = take_measurement(mqtt_client, SENSOR_IN);
           cn_data_items++;
           t0m = td;
         }
@@ -261,7 +264,7 @@ void loop()
         }
         if (td - t0b > REST*5)
         {
-          pt_value = cn_data_cache/cn_data_items;
+          analog_value = cn_data_cache/cn_data_items;
           cn_data_cache = cn_data_items = 0;
           publish_measurement(debug, proc.field, mqtt_client);
           t0b = td;
@@ -448,7 +451,7 @@ void on_message(const char* topic, byte* msg, uint8_t len)
       Serial.println("BANG!");
 #if defined(CAM)
       shoot_next = true;
-#elif defined(PTX)
+#elif cn_type == cn_data
       publish_measurement(debug, proc.field, mqtt_client);
 #endif
     }

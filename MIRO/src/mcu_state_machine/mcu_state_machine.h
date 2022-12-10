@@ -17,7 +17,7 @@
  * MACRO
  */
 
-#define PTX
+#define TEMP
 
 #ifdef CAM
   #define SCK                 14
@@ -65,7 +65,14 @@
 #define UQ_TOPIC_CONF         "config/PTX"
 #define UQ_TOPIC_DATA         "data/PTX"
 #define UQ_TOPIC_TRIG         "trigger/PTX"
-#define PTX_IN                36
+#define SENSOR_IN             36
+#elif defined(TEMP)
+#define UQ_NODE               "TEMP"
+#define UQ_TOPIC_CONF         "config/TEMP"
+#define UQ_TOPIC_DATA         "data/TEMP"
+#define UQ_TOPIC_TRIG         "trigger/TEMP"
+#define SENSOR_IN             32
+#define DHTTYPE DHT11
 #endif
 
 
