@@ -17,7 +17,7 @@
  * MACRO
  */
 
-#define TEMP
+#define PTX
 
 #ifdef CAM
   #define SCK                 14
@@ -60,6 +60,8 @@
 #define UQ_TOPIC_CONF         "config/SDLEV"
 #define UQ_TOPIC_DATA         "data/SDLEV"
 #define UQ_TOPIC_TRIG         "trigger/SDLEV"
+#define SENSOR_IN             36
+#define UREF                  3.3
 #elif defined(PTX)
 #define UQ_NODE               "PTX"
 #define UQ_TOPIC_CONF         "config/PTX"

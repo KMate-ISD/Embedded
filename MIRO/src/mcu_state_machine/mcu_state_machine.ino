@@ -8,8 +8,10 @@
   #include "C:\Computer_science\Projects\Embedded\MIRO\src\mcu_relay\mcu_reed_relay.h"
 #elif defined(CAM)
   #include "C:\Computer_science\Projects\Embedded\MIRO\src\mcu_cam\mcu_cam.h"
+#elif defined(SDLEV)
+  #include "C:\Computer_science\Projects\Embedded\MIRO\src\mcu_sound\mcu_sound.h"
 #elif defined(PTX)
-  #include "C:\Computer_science\Projects\Embedded\MIRO\src\mcu_ptrans\mcu_ptrans.h"
+  #include "C:\Computer_science\Projects\Embedded\MIRO\src\mcu_photo_t\mcu_photo_t.h"
 #elif defined(TEMP)
   #include "C:\Computer_science\Projects\Embedded\MIRO\src\mcu_temp\mcu_temp.h"
 #endif
@@ -56,10 +58,10 @@ bool led_state              = false;            // Status of on board LED
 uint8_t switch_state        = sw_normal;        // Toggle Normal op., Receive and Transmit states
 bool cn_trigger_prev        = false;
 bool cn_trigger_curr        = false;
-uint8_t cn_data_div         = 2;
+uint8_t cn_data_div         = 24;
 uint8_t cn_data_items       = 0;
 size_t cn_data_curr         = 0;
-size_t cn_data_cache        = 0;
+float cn_data_cache         = 0;
 
   // Timer
 bool autoreload             = true;
@@ -247,7 +249,12 @@ void loop()
       #elif cn_type == cn_data
         if (td - t0m > REST/cn_data_div)
         {
+          #if defined(SDLEV)
+          cn_data_curr = take_measurement(mqtt_client, SENSOR_IN);
+          cn_data_cache += pow(10, (0.1*cn_data_curr));
+          #else
           cn_data_cache += cn_data_curr = take_measurement(mqtt_client, SENSOR_IN);
+          #endif
           cn_data_items++;
           t0m = td;
         }
@@ -264,7 +271,11 @@ void loop()
         }
         if (td - t0b > REST*5)
         {
-          analog_value = cn_data_cache/cn_data_items;
+          #if defined(SDLEV)
+          analog_value = static_cast<size_t>(10*log10(cn_data_cache/cn_data_items));
+          #else
+          analog_value = static_cast<size_t>(cn_data_cache/cn_data_items);
+          #endif
           cn_data_cache = cn_data_items = 0;
           publish_measurement(debug, proc.field, mqtt_client);
           t0b = td;
