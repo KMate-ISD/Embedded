@@ -1,0 +1,129 @@
+<mxfile host="65bd71144e">
+    <diagram id="61TZHSiWRsHqKjNAX23i" name="Page-1">
+        <mxGraphModel dx="3498" dy="3740" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" background="#ffffff" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="14" value="mcu_reed_relay.h" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;fontFamily=Lucida Console;fontSize=16;fillColor=none;strokeColor=#000000;fontColor=#000000;" parent="1" vertex="1">
+                    <mxGeometry x="-749" y="-1760" width="739" height="126" as="geometry"/>
+                </mxCell>
+                <mxCell id="15" value="Adott CN-re vonatkozó globálisok és konstansok" style="text;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;fontFamily=Courier New;fontSize=16;strokeColor=#000000;fontColor=#000000;" parent="14" vertex="1">
+                    <mxGeometry y="30" width="739" height="48" as="geometry"/>
+                </mxCell>
+                <mxCell id="16" value="update_reed_status(debug, mqtt_client)                            : void" style="text;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;strokeColor=#000000;fontFamily=Courier New;fontSize=16;fontColor=#000000;" parent="14" vertex="1">
+                    <mxGeometry y="78" width="739" height="48" as="geometry"/>
+                </mxCell>
+                <mxCell id="24" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;fontFamily=Lucida Console;endArrow=diamond;endFill=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;fontSize=13.5;entryX=1;entryY=0.48;entryDx=0;entryDy=0;entryPerimeter=0;strokeColor=#000000;fontColor=#000000;" parent="1" source="7" target="3" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="330" y="-1490" as="sourcePoint"/>
+                        <mxPoint x="550" y="-1320" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="540" y="-1472"/>
+                            <mxPoint x="540" y="-1336"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="25" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;fontFamily=Lucida Console;endArrow=diamond;endFill=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;fontSize=13.5;strokeColor=#000000;fontColor=#000000;" parent="1" source="10" target="3" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="330" y="-910" as="sourcePoint"/>
+                        <mxPoint x="280" y="-1170" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="540" y="-806"/>
+                            <mxPoint x="540" y="-1000"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="26" value="mcu_light.h" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;fontFamily=Lucida Console;fontSize=16;fillColor=none;strokeColor=#000000;fontColor=#000000;" vertex="1" parent="1">
+                    <mxGeometry x="-749" y="-1376" width="739" height="126" as="geometry"/>
+                </mxCell>
+                <mxCell id="27" value="Adott CN-re vonatkozó globálisok és konstansok" style="text;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;fontFamily=Courier New;fontSize=16;strokeColor=#000000;fontColor=#000000;" vertex="1" parent="26">
+                    <mxGeometry y="30" width="739" height="48" as="geometry"/>
+                </mxCell>
+                <mxCell id="28" value="actuate(actuator_out)                                             : void" style="text;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;strokeColor=#000000;fontFamily=Courier New;fontSize=16;fontColor=#000000;" vertex="1" parent="26">
+                    <mxGeometry y="78" width="739" height="48" as="geometry"/>
+                </mxCell>
+                <mxCell id="35" value="" style="edgeStyle=none;html=1;entryX=0;entryY=0.037;entryDx=0;entryDy=0;entryPerimeter=0;dashed=1;endArrow=open;endFill=0;strokeColor=#000000;fontColor=#000000;" edge="1" parent="1" source="15" target="3">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="36" value="" style="edgeStyle=none;html=1;dashed=1;endArrow=open;endFill=0;entryX=0.002;entryY=0.229;entryDx=0;entryDy=0;entryPerimeter=0;strokeColor=#000000;fontColor=#000000;" edge="1" parent="1" source="18" target="3">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="37" value="" style="edgeStyle=none;html=1;dashed=1;endArrow=open;endFill=0;strokeColor=#000000;fontColor=#000000;" edge="1" parent="1" source="27" target="3">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="38" value="" style="edgeStyle=none;html=1;dashed=1;endArrow=open;endFill=0;entryX=0;entryY=0.7;entryDx=0;entryDy=0;entryPerimeter=0;strokeColor=#000000;fontColor=#000000;" edge="1" parent="1" source="12" target="3">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="39" value="" style="edgeStyle=none;html=1;dashed=1;endArrow=open;endFill=0;entryX=-0.005;entryY=0.954;entryDx=0;entryDy=0;entryPerimeter=0;strokeColor=#000000;fontColor=#000000;" edge="1" parent="1" source="30" target="3">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="40" value="" style="edgeStyle=none;html=1;dashed=1;endArrow=open;endFill=0;entryX=0;entryY=0.603;entryDx=0;entryDy=0;entryPerimeter=0;strokeColor=#000000;fontColor=#000000;" edge="1" parent="1" source="33" target="4">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="2" value="mcu_state_machine.h, .cpp" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;fontFamily=Lucida Console;fontSize=16;fillColor=none;strokeColor=#000000;fontColor=#000000;" parent="1" vertex="1">
+                    <mxGeometry x="30" y="-1760" width="490" height="1152" as="geometry"/>
+                </mxCell>
+                <mxCell id="3" value="old_btn_state           : bool&#10;old_held                : bool&#10;old_led_state           : bool&#10;old_miro_state          : uint8_t&#10;old_switch_state        : uint8_t&#10;       &#10;held                    : bool&#10;debug                   : bool&#10;config_exists           : bool&#10;trigger_exists          : bool&#10;miro_state              : uint8_t&#10;c                       : uint8_t&#10;t0                      : size_t&#10;td;                     : size_t&#10;       &#10;btn_state               : bool&#10;led_state               : bool&#10;switch_state            : uint8_t&#10;       &#10;autoreload              : bool&#10;edge                    : bool&#10;timer_count_up          : bool&#10;alarm_treshold          : uint64_t&#10;timer_divider           : uint16_t&#10;timer_cycle             : hw_timer_t*&#10;timer_span              : hw_timer_t*&#10;       &#10;wifi_client             : WiFiClient&#10;mqtt_client             : PubSubClient*&#10;       &#10;preferences             : Preferences&#10;proc                    : Credentials_processor&#10;       &#10;rfid                    : MFRC522&#10;ecdc                    : Tag_encoder_decoder&#10;       &#10;State                   : enum&#10;Switch_state            : enum&#10;&#10;Client Node-onként eltérő globálisok&#10;Előfeldolgozó által kezelt konstansok" style="text;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;fontFamily=Courier New;fontSize=16;strokeColor=#000000;fontColor=#000000;" parent="2" vertex="1">
+                    <mxGeometry y="30" width="490" height="820" as="geometry"/>
+                </mxCell>
+                <mxCell id="4" value="hard_reset()                        : void&#10;init_mqtt()                         : void&#10;init_timer()                        : void&#10;init_wifi()                         : void&#10;mqtt_connect()                      : bool&#10;keep_mqtt_connected()               : bool&#10;on_message(topic, msg, len)         : void&#10;print_state()                       : void&#10;setup()                             : void&#10;loop()                              : void&#10;inline parse_ip_to_string(dest, ip) : void&#10;&#10;ISR()                               : void&#10;on_alarm_cycle()                    : void&#10;on_alarm_span()                     : void" style="text;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;strokeColor=#000000;fontFamily=Courier New;fontSize=16;fontColor=#000000;" parent="2" vertex="1">
+                    <mxGeometry y="850" width="490" height="302" as="geometry"/>
+                </mxCell>
+                <mxCell id="5" value="mcu_tag_encoder_decoder.h, .cpp" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;fontFamily=Lucida Console;fontSize=16;fillColor=none;strokeColor=#000000;fontColor=#000000;" parent="1" vertex="1">
+                    <mxGeometry x="560" y="-1760" width="739" height="427" as="geometry"/>
+                </mxCell>
+                <mxCell id="6" value="- reset_ul  : uint8_t*&#10;+ rfid      : MFRC522" style="text;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;fontFamily=Courier New;fontSize=16;strokeColor=#000000;fontColor=#000000;" parent="5" vertex="1">
+                    <mxGeometry y="30" width="739" height="119" as="geometry"/>
+                </mxCell>
+                <mxCell id="7" value="+ Tag_encoder_decoder(MFRC522&amp;)                       : constructor&#10;+ ~Tag_encoder_decoder()                              : destructor&#10;&#10;+ dump_memory()                                       : void&#10;+ end_op()                                            : void&#10;+ precision_write(data, len, start_block, start_byte) : void&#10;+ print_hex(bytes, len)                               : void&#10;+ print_to_serial(buffer)                             : void&#10;+ read_blocks(dest, start_block, stop_block)          : void&#10;+ reset_blocks(start_block, count)                    : void&#10;+ write_blocks(source, len, start_block)              : void&#10;+ get_tag_type()                                      : String" style="text;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;strokeColor=#000000;fontFamily=Courier New;fontSize=16;fontColor=#000000;" parent="5" vertex="1">
+                    <mxGeometry y="149" width="739" height="278" as="geometry"/>
+                </mxCell>
+                <mxCell id="8" value="mcu_credentials_processor.h, .cpp" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;fontFamily=Lucida Console;fontSize=16;fillColor=none;strokeColor=#000000;fontColor=#000000;" parent="1" vertex="1">
+                    <mxGeometry x="560" y="-1293" width="739" height="685" as="geometry"/>
+                </mxCell>
+                <mxCell id="9" value="mqtt_port     : uint16_t&#10;mqtt_broker   : uint8_t*&#10;mqtt_user     : char*&#10;mqtt_pass     : char*&#10;trigger       : char*&#10;&#10;len_wlan_psk  : uint8_t&#10;len_wlan_ssid : uint8_t&#10;wlan_psk      : char*&#10;wlan_ssid     : char*&#10;&#10;preferences   : Preferences" style="text;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;fontFamily=Courier New;fontSize=16;strokeColor=#000000;fontColor=#000000;" parent="8" vertex="1">
+                    <mxGeometry y="30" width="739" height="259" as="geometry"/>
+                </mxCell>
+                <mxCell id="10" value="Credentials_processor(Preferences&amp;)                               : constr&#10;~Credentials_processor()                                          : destr&#10;&#10;check_and_decode(data)                                            : bool&#10;check_if_preferences_has_keys(args_count, ...)                    : uint8_t&#10;alloc_mem_mqtt_creds()                                            : void&#10;alloc_mem_wifi_creds(len_wlan_ssid, len_wlan_psk)                 : void&#10;set_mqtt_server(mqtt_broker_bytes, mqtt_port)                     : void&#10;set_mqtt_creds(mqtt_user, mqtt_pass)                              : void&#10;set_wifi_creds(wlan_ssid, len_wlan_ssid, wlan_psk, len_wlan_psk)  : void&#10;add_trigger(trigger)                                              : void&#10;load_trigger()                                                    : bool&#10;save_trigger()                                                    : void&#10;load_preferences()                                                : bool&#10;save_preferences()                                                : void&#10;print_creds()                                                     : void" style="text;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;strokeColor=#000000;fontFamily=Courier New;fontSize=16;fontColor=#000000;" parent="8" vertex="1">
+                    <mxGeometry y="289" width="739" height="396" as="geometry"/>
+                </mxCell>
+                <mxCell id="17" value="mcu_cam.h" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;fontFamily=Lucida Console;fontSize=16;fillColor=none;strokeColor=#000000;fontColor=#000000;" parent="1" vertex="1">
+                    <mxGeometry x="-749" y="-1594" width="739" height="178" as="geometry"/>
+                </mxCell>
+                <mxCell id="18" value="Adott CN-re vonatkozó globálisok és konstansok" style="text;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;fontFamily=Courier New;fontSize=16;fillColor=none;strokeColor=#000000;fontColor=#000000;" parent="17" vertex="1">
+                    <mxGeometry y="30" width="739" height="48" as="geometry"/>
+                </mxCell>
+                <mxCell id="19" value="check_photo(fs)                                                   : bool&#10;shoot_and_save()                                                  : void&#10;setup_cam_module(server)                                          : void&#10;shoot()                                                           : void" style="text;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;strokeColor=#000000;fontFamily=Courier New;fontSize=16;fontColor=#000000;" parent="17" vertex="1">
+                    <mxGeometry y="78" width="739" height="100" as="geometry"/>
+                </mxCell>
+                <mxCell id="29" value="mcu_tmep.h" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;fontFamily=Lucida Console;fontSize=16;fillColor=none;strokeColor=#000000;fontColor=#000000;" vertex="1" parent="1">
+                    <mxGeometry x="-749" y="-996" width="739" height="174" as="geometry"/>
+                </mxCell>
+                <mxCell id="30" value="Adott CN-re vonatkozó globálisok és konstansok" style="text;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;fontFamily=Courier New;fontSize=16;strokeColor=#000000;fontColor=#000000;" vertex="1" parent="29">
+                    <mxGeometry y="30" width="739" height="48" as="geometry"/>
+                </mxCell>
+                <mxCell id="31" value="size_t take_measurement(mqtt_client, ptx_pin)                     : size_t&#10;void publish_measurement(debug, field, mqtt_client)               : void" style="text;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;strokeColor=#000000;fontFamily=Courier New;fontSize=16;fontColor=#000000;" vertex="1" parent="29">
+                    <mxGeometry y="78" width="739" height="96" as="geometry"/>
+                </mxCell>
+                <mxCell id="32" value="mcu_photo_t.h" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;fontFamily=Lucida Console;fontSize=16;fillColor=none;strokeColor=#000000;fontColor=#000000;" vertex="1" parent="1">
+                    <mxGeometry x="-749" y="-782" width="739" height="174" as="geometry"/>
+                </mxCell>
+                <mxCell id="33" value="Adott CN-re vonatkozó globálisok és konstansok" style="text;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;fontFamily=Courier New;fontSize=16;strokeColor=#000000;fontColor=#000000;" vertex="1" parent="32">
+                    <mxGeometry y="30" width="739" height="48" as="geometry"/>
+                </mxCell>
+                <mxCell id="34" value="size_t take_measurement(mqtt_client, ptx_pin)                     : size_t&#10;void publish_measurement(debug, field, mqtt_client)               : void" style="text;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;strokeColor=#000000;fontFamily=Courier New;fontSize=16;fontColor=#000000;" vertex="1" parent="32">
+                    <mxGeometry y="78" width="739" height="96" as="geometry"/>
+                </mxCell>
+                <mxCell id="11" value="mcu_sound.h" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;fontFamily=Lucida Console;fontSize=16;fillColor=none;strokeColor=#000000;fontColor=#000000;" parent="1" vertex="1">
+                    <mxGeometry x="-749" y="-1210" width="739" height="174" as="geometry"/>
+                </mxCell>
+                <mxCell id="12" value="Adott CN-re vonatkozó globálisok és konstansok" style="text;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;fontFamily=Courier New;fontSize=16;strokeColor=#000000;fontColor=#000000;" parent="11" vertex="1">
+                    <mxGeometry y="30" width="739" height="48" as="geometry"/>
+                </mxCell>
+                <mxCell id="13" value="size_t take_measurement(mqtt_client, ptx_pin) : size_t&#10;void publish_measurement(debug, field, mqtt_client) : void" style="text;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;strokeColor=#000000;fontFamily=Courier New;fontSize=16;fontColor=#000000;" parent="11" vertex="1">
+                    <mxGeometry y="78" width="739" height="96" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>
